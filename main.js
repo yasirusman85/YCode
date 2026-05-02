@@ -5,12 +5,16 @@ const Docker = require('dockerode');
 const docker = new Docker();
 const pty = require('node-pty');
 const LSPManager = require('./lsp-manager');
+const ExtensionManager = require('./extension-manager');
 
 // Terminal management
 const terminals = new Map();
 
 // LSP management
 const lspManager = new LSPManager();
+
+// Extension management
+const extensionManager = new ExtensionManager(app.getAppPath());
 
 // Store pending LSP requests
 const pendingLSPRequests = new Map();
@@ -369,7 +373,63 @@ ipcMain.handle('ai-complete', async (event, code, language, cursorPosition) => {
   };
 });
 
-app.whenReady().then(() => {
+// Extension IPC Handlers
+ipcMain.handle('extension-load', async (event, extensionPath) => {
+  return await extensionManager.loadExtension(extensionPath);
+});
+
+ipcMain.handle('extension-unload', async (event, extensionId) => {
+  return { success: extensionManager.unloadExtension(extensionId) };
+});
+
+ipcMain.handle('extensions-list', async () => {
+  return { 
+    success: true, 
+    extensions: extensionManager.getLoadedExtensions() 
+  };
+});
+
+ipcMain.handle('extension-get-themes', async () => {
+  const themes = extensionManager.extensionAPIs.get('themes');
+  return { 
+    success: true, 
+    themes: themes ? Array.from(themes.entries()) : [] 
+  };
+});
+
+ipcMain.handle('extension-get-commands', async () => {
+  const commands = [];
+  extensionManager.loadedExtensions.forEach((ext, id) => {
+    if (ext.manifest.contributes?.commands) {
+      ext.manifest.contributes.commands.forEach(cmd => {
+        commands.push({
+          id: `${id}.${cmd.command}`,
+          title: cmd.title,
+          category: cmd.category
+        });
+      });
+    }
+  });
+  return { success: true, commands };
+});
+
+ipcMain.handle('extension-execute-command', async (event, commandId, ...args) => {
+  try {
+    const result = await ipcMain.emit(`command:${commandId}`, event, ...args);
+    return { success: true, result };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+app.whenReady().then(async () => {
+  // Initialize extension manager
+  await extensionManager.initialize();
+  
+  // Load all extensions
+  const loadResult = await extensionManager.loadAllExtensions();
+  console.log('Extensions loaded:', loadResult);
+
   createWindow();
 
   app.on('activate', () => {

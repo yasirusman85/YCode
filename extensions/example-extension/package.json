@@ -1,0 +1,63 @@
+{
+  "name": "ycode-example-extension",
+  "displayName": "YCode Example Extension",
+  "version": "1.0.0",
+  "description": "A sample extension demonstrating the YCode extension API",
+  "publisher": "ycode",
+  "engines": {
+    "ycode": "^1.0.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "example",
+    "demo"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "example.helloWorld",
+        "title": "Hello World",
+        "category": "Example"
+      },
+      {
+        "command": "example.showInfo",
+        "title": "Show Information",
+        "category": "Example"
+      }
+    ],
+    "themes": [
+      {
+        "label": "Example Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/example-dark.json"
+      }
+    ],
+    "configuration": {
+      "title": "Example Extension",
+      "properties": {
+        "example.greeting": {
+          "type": "string",
+          "default": "Hello",
+          "description": "The greeting message to show"
+        },
+        "example.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the extension"
+        }
+      }
+    }
+  },
+  "activationEvents": [
+    "onCommand:example.helloWorld",
+    "onLanguage:javascript"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {},
+  "license": "MIT"
+}

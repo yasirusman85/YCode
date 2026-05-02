@@ -23,5 +23,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   lspHover: (language, uri, line, character) => ipcRenderer.invoke('lsp-hover', language, uri, line, character),
   lspDefinition: (language, uri, line, character) => ipcRenderer.invoke('lsp-definition', language, uri, line, character),
   // AI Completion API
-  aiComplete: (code, language, cursorPosition) => ipcRenderer.invoke('ai-complete', code, language, cursorPosition)
+  aiComplete: (code, language, cursorPosition) => ipcRenderer.invoke('ai-complete', code, language, cursorPosition),
+  // Extension APIs
+  extensionLoad: (extensionPath) => ipcRenderer.invoke('extension-load', extensionPath),
+  extensionUnload: (extensionId) => ipcRenderer.invoke('extension-unload', extensionId),
+  extensionsList: () => ipcRenderer.invoke('extensions-list'),
+  extensionGetThemes: () => ipcRenderer.invoke('extension-get-themes'),
+  extensionGetCommands: () => ipcRenderer.invoke('extension-get-commands'),
+  extensionExecuteCommand: (commandId, ...args) => ipcRenderer.invoke('extension-execute-command', commandId, ...args)
 });

@@ -1,0 +1,99 @@
+{
+  "name": "Example Dark",
+  "type": "dark",
+  "colors": {
+    "editor.background": "#1a1a2e",
+    "editor.foreground": "#eeeeee",
+    "editor.lineHighlightBackground": "#16213e",
+    "editor.selectionBackground": "#0f3460",
+    "editorCursor.foreground": "#e94560",
+    "editorWhitespace.foreground": "#2a2a4a",
+    
+    "activityBar.background": "#16213e",
+    "activityBar.foreground": "#eeeeee",
+    "activityBarBadge.background": "#e94560",
+    "activityBarBadge.foreground": "#ffffff",
+    
+    "sideBar.background": "#0f3460",
+    "sideBar.foreground": "#eeeeee",
+    "sideBarSectionHeader.background": "#1a1a2e",
+    
+    "statusBar.background": "#16213e",
+    "statusBar.foreground": "#eeeeee",
+    
+    "titleBar.activeBackground": "#1a1a2e",
+    "titleBar.activeForeground": "#eeeeee",
+    
+    "tab.activeBackground": "#16213e",
+    "tab.inactiveBackground": "#1a1a2e",
+    "tab.activeForeground": "#eeeeee",
+    "tab.inactiveForeground": "#999999",
+    
+    "button.background": "#e94560",
+    "button.foreground": "#ffffff",
+    "button.hoverBackground": "#ff6b6b",
+    
+    "input.background": "#16213e",
+    "input.foreground": "#eeeeee",
+    "input.border": "#0f3460"
+  },
+  "tokenColors": [
+    {
+      "name": "Comment",
+      "scope": ["comment", "punctuation.definition.comment"],
+      "settings": {
+        "fontStyle": "italic",
+        "foreground": "#6c7983"
+      }
+    },
+    {
+      "name": "String",
+      "scope": ["string", "string.quoted", "string.template"],
+      "settings": {
+        "foreground": "#a8d5ba"
+      }
+    },
+    {
+      "name": "Number",
+      "scope": ["constant.numeric"],
+      "settings": {
+        "foreground": "#f7b731"
+      }
+    },
+    {
+      "name": "Keyword",
+      "scope": ["keyword", "storage.type", "storage.modifier"],
+      "settings": {
+        "foreground": "#e94560"
+      }
+    },
+    {
+      "name": "Function",
+      "scope": ["entity.name.function", "support.function"],
+      "settings": {
+        "foreground": "#7ee8fa"
+      }
+    },
+    {
+      "name": "Variable",
+      "scope": ["variable", "support.variable"],
+      "settings": {
+        "foreground": "#eeeeee"
+      }
+    },
+    {
+      "name": "Class/Interface",
+      "scope": ["entity.name.class", "entity.name.interface", "support.class"],
+      "settings": {
+        "foreground": "#f7b731"
+      }
+    },
+    {
+      "name": "Type",
+      "scope": ["entity.name.type", "support.type"],
+      "settings": {
+        "foreground": "#7ee8fa"
+      }
+    }
+  ]
+}

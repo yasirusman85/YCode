@@ -1,11 +1,112 @@
 {
   "name": "ycode",
   "version": "1.0.0",
-  "description": "",
+  "description": "YCode - A modern code editor with intelligent features",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "dist": "electron-builder --publish=never",
+    "pack": "electron-builder --dir",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "build": {
+    "appId": "com.ycode.editor",
+    "productName": "YCode",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "lsp-manager.js",
+      "monaco-lsp-client.js",
+      "extension-manager.js",
+      "node_modules/**/*",
+      "extensions/**/*",
+      "!node_modules/**/*.map",
+      "!node_modules/**/test/**/*",
+      "!node_modules/**/tests/**/*",
+      "!node_modules/**/*.md",
+      "!node_modules/**/*.ts",
+      "!node_modules/@types/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "extensions",
+        "to": "extensions",
+        "filter": ["**/*"]
+      }
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/node-pty/**/*",
+      "node_modules/dockerode/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "verifyUpdateCodeSignature": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "YCode",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "license": "LICENSE",
+      "artifactName": "YCode-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "YCode-Portable-${version}.${ext}"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "icon": "build/icon.icns",
+      "category": "public.app-category.developer-tools"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icons",
+      "category": "Development",
+      "maintainer": "YCode",
+      "vendor": "YCode",
+      "synopsis": "Modern code editor with intelligent features",
+      "description": "YCode is a modern code editor featuring LSP support, integrated terminal, Docker-based code execution, and extensible plugin system."
+    },
+    "publish": null
   },
   "repository": {
     "type": "git",
@@ -20,6 +121,7 @@
   "homepage": "https://github.com/yasirusman85/YCode#readme",
   "devDependencies": {
     "electron": "^41.5.0",
+    "electron-builder": "^26.8.1",
     "monaco-languageclient": "^10.7.0",
     "openai": "^6.35.0",
     "pyright": "^1.1.409",
