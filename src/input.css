@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@source "../index.html";
+@source "../renderer.js";
+
+@theme {
+  --color-ycode-dark: #1e1e1e;
+  --color-ycode-darker: #252526;
+  --color-ycode-border: #3c3c3c;
+  --color-ycode-text: #cccccc;
+  --color-ycode-blue: #0e639c;
+  --color-ycode-blue-hover: #1177bb;
+  --color-ycode-green: #388a34;
+  --color-ycode-red: #d73a49;
+  --color-ycode-purple: #9333ea;
+}
+
+@layer base {
+  body {
+    @apply m-0 p-0 overflow-hidden font-sans bg-ycode-dark text-ycode-text;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply bg-ycode-blue text-white border-none py-2 px-4 cursor-pointer rounded text-[13px] hover:bg-ycode-blue-hover transition-colors;
+  }
+  
+  .panel-header {
+    @apply bg-ycode-darker px-3 py-2 flex justify-between items-center border-b border-ycode-border;
+  }
+}

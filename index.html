@@ -4,605 +4,66 @@
   <meta charset="UTF-8">
   <title>YCode Editor</title>
   <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css" />
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    #toolbar {
-      background: #252526;
-      padding: 10px;
-      display: flex;
-      gap: 10px;
-      border-bottom: 1px solid #3c3c3c;
-      align-items: center;
-    }
-    button {
-      background: #0e639c;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      cursor: pointer;
-      border-radius: 3px;
-      font-size: 13px;
-    }
-    button:hover {
-      background: #1177bb;
-    }
-    #runBtn {
-      background: #388a34;
-    }
-    #runBtn:hover {
-      background: #4caf50;
-    }
-    #terminalBtn {
-      background: #6366f1;
-    }
-    #terminalBtn:hover {
-      background: #818cf8;
-    }
-    #agentBtn {
-      background: #9333ea;
-    }
-    #agentBtn:hover {
-      background: #a855f7;
-    }
-    #filename {
-      color: #cccccc;
-      padding: 8px;
-      font-size: 13px;
-      flex-grow: 1;
-    }
-    #container {
-      width: 100vw;
-      height: calc(100vh - 200px);
-    }
-    #outputPanel {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 150px;
-      background: #1e1e1e;
-      border-top: 1px solid #3c3c3c;
-      display: none;
-      flex-direction: column;
-    }
-    #outputPanel.visible {
-      display: flex;
-    }
-    #outputHeader {
-      background: #252526;
-      padding: 8px 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #3c3c3c;
-    }
-    #outputTitle {
-      color: #cccccc;
-      font-size: 12px;
-      font-weight: bold;
-    }
-    #closeOutput {
-      background: #d73a49;
-      color: white;
-      border: none;
-      padding: 4px 12px;
-      cursor: pointer;
-      border-radius: 3px;
-      font-size: 11px;
-    }
-    #closeOutput:hover {
-      background: #e85d6d;
-    }
-    #outputContent {
-      flex-grow: 1;
-      padding: 10px;
-      overflow: auto;
-      color: #cccccc;
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-size: 13px;
-      white-space: pre-wrap;
-    }
-    #outputContent.error {
-      color: #f48771;
-    }
-    #terminalPanel {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 200px;
-      background: #1e1e1e;
-      border-top: 1px solid #3c3c3c;
-      display: none;
-      flex-direction: column;
-    }
-    #terminalPanel.visible {
-      display: flex;
-    }
-    #terminalHeader {
-      background: #252526;
-      padding: 8px 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #3c3c3c;
-    }
-    #terminalTitle {
-      color: #cccccc;
-      font-size: 12px;
-      font-weight: bold;
-    }
-    #terminalToolbar {
-      display: flex;
-      gap: 5px;
-    }
-    #terminalContainer {
-      flex-grow: 1;
-      padding: 5px;
-      overflow: hidden;
-    }
-    #terminal {
-      height: 100%;
-    }
-    .xterm {
-      height: 100%;
-    }
-    #agentPanel {
-      position: fixed;
-      right: 0;
-      top: 48px;
-      bottom: 0;
-      width: 300px;
-      background: #1e1e1e;
-      border-left: 1px solid #3c3c3c;
-      display: none;
-      flex-direction: column;
-      z-index: 100;
-    }
-    #agentPanel.visible {
-      display: flex;
-    }
-    #agentHeader {
-      background: #252526;
-      padding: 8px 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #3c3c3c;
-    }
-    #agentTitle {
-      color: #cccccc;
-      font-size: 12px;
-      font-weight: bold;
-    }
-    #closeAgent {
-      background: transparent;
-      color: #ccc;
-      border: none;
-      cursor: pointer;
-    }
-    #agentChat {
-      flex-grow: 1;
-      padding: 10px;
-      overflow-y: auto;
-      color: #ccc;
-      font-size: 13px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .agent-msg { background: #2d2d2d; padding: 8px; border-radius: 4px; white-space: pre-wrap; }
-    .user-msg { background: #0e639c; padding: 8px; border-radius: 4px; align-self: flex-end; white-space: pre-wrap; }
-    #agentStatus {
-      padding: 5px 10px;
-      font-size: 11px;
-      color: #888;
-      font-style: italic;
-      border-top: 1px solid #333;
-    }
-    #agentInputContainer {
-      display: flex;
-      padding: 10px;
-      border-top: 1px solid #3c3c3c;
-    }
-    #agentInput {
-      flex-grow: 1;
-      background: #3c3c3c;
-      color: white;
-      border: 1px solid #555;
-      padding: 6px;
-      border-radius: 3px;
-    }
-    #agentSubmit {
-      background: #0e639c;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      margin-left: 5px;
-      border-radius: 3px;
-      cursor: pointer;
-    }
-    /* Approval Toast */
-    #approvalToast {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #252526;
-      border: 1px solid #007acc;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-      padding: 15px;
-      border-radius: 6px;
-      z-index: 1000;
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-      color: #ccc;
-    }
-    #approvalToast.visible {
-      display: flex;
-    }
-    #approvalCommand {
-      font-family: monospace;
-      background: #1e1e1e;
-      padding: 8px;
-      border-radius: 4px;
-      word-break: break-all;
-    }
-    .approval-buttons {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-    #btnApprove { background: #388a34; }
-    #btnDeny { background: #d73a49; }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
-  <div id="toolbar">
-    <button id="openBtn">Open File</button>
-    <button id="saveBtn">Save File</button>
-    <button id="runBtn">▶ Run Code</button>
-    <button id="terminalBtn">Terminal</button>
-    <button id="agentBtn">🤖 Agent</button>
-    <span id="filename">No file open</span>
+<body class="m-0 p-0 overflow-hidden font-sans bg-ycode-dark text-ycode-text">
+  
+  <div id="toolbar" class="bg-ycode-darker p-2.5 flex gap-2.5 items-center border-b border-ycode-border">
+    <button id="openBtn" class="btn">Open File</button>
+    <button id="saveBtn" class="btn">Save File</button>
+    <button id="runBtn" class="btn bg-ycode-green hover:bg-[#4caf50]">▶ Run Code</button>
+    <button id="terminalBtn" class="btn bg-[#6366f1] hover:bg-[#818cf8]">Terminal</button>
+    <button id="agentBtn" class="btn bg-ycode-purple hover:bg-[#a855f7]">🤖 Agent</button>
+    <span id="filename" class="text-ycode-text p-2 text-[13px] flex-grow">No file open</span>
   </div>
-  <div id="container"></div>
-  <div id="outputPanel">
-    <div id="outputHeader">
-      <span id="outputTitle">Output</span>
-      <button id="closeOutput">Close</button>
+  
+  <div id="container" class="w-screen" style="height: calc(100vh - 200px);"></div>
+  
+  <div id="outputPanel" class="fixed bottom-0 left-0 right-0 h-[150px] bg-ycode-dark border-t border-ycode-border hidden flex-col">
+    <div id="outputHeader" class="panel-header">
+      <span id="outputTitle" class="text-ycode-text text-xs font-bold">Output</span>
+      <button id="closeOutput" class="btn bg-ycode-red hover:bg-[#e85d6d] py-1 px-3 text-[11px]">Close</button>
     </div>
-    <div id="outputContent"></div>
+    <div id="outputContent" class="flex-grow p-2.5 overflow-auto text-ycode-text font-mono text-[13px] whitespace-pre-wrap"></div>
   </div>
-  <div id="terminalPanel">
-    <div id="terminalHeader">
-      <span id="terminalTitle">Terminal</span>
-      <div id="terminalToolbar">
-        <button id="closeTerminal" style="padding: 4px 12px; font-size: 11px;">Close</button>
+  
+  <div id="terminalPanel" class="fixed bottom-0 left-0 right-0 h-[200px] bg-ycode-dark border-t border-ycode-border hidden flex-col">
+    <div id="terminalHeader" class="panel-header">
+      <span id="terminalTitle" class="text-ycode-text text-xs font-bold">Terminal</span>
+      <div id="terminalToolbar" class="flex gap-1">
+        <button id="closeTerminal" class="btn bg-ycode-red hover:bg-[#e85d6d] py-1 px-3 text-[11px]">Close</button>
       </div>
     </div>
-    <div id="terminalContainer">
-      <div id="terminal"></div>
+    <div id="terminalContainer" class="flex-grow p-1 overflow-hidden">
+      <div id="terminal" class="h-full"></div>
     </div>
   </div>
 
-  <div id="agentPanel">
-    <div id="agentHeader">
-      <span id="agentTitle">AI Agent</span>
-      <button id="closeAgent">✖</button>
+  <div id="agentPanel" class="fixed right-0 top-[48px] bottom-0 w-[300px] bg-ycode-dark border-l border-ycode-border hidden flex-col z-50">
+    <div id="agentHeader" class="panel-header">
+      <span id="agentTitle" class="text-ycode-text text-xs font-bold">AI Agent</span>
+      <button id="closeAgent" class="bg-transparent text-[#ccc] border-none cursor-pointer">✖</button>
     </div>
-    <div id="agentChat"></div>
-    <div id="agentStatus">Idle</div>
-    <div id="agentInputContainer">
-      <input type="text" id="agentInput" placeholder="Ask agent..." />
-      <button id="agentSubmit">Send</button>
+    <div id="agentChat" class="flex-grow p-2.5 overflow-y-auto text-[#ccc] text-[13px] flex flex-col gap-2.5"></div>
+    <div id="agentStatus" class="p-1 px-2.5 text-[11px] text-[#888] italic border-t border-[#333]">Idle</div>
+    <div id="agentInputContainer" class="flex p-2.5 border-t border-ycode-border">
+      <input type="text" id="agentInput" class="flex-grow bg-[#3c3c3c] text-white border border-[#555] p-1.5 rounded-[3px]" placeholder="Ask agent..." />
+      <button id="agentSubmit" class="btn ml-1 py-1.5 px-3">Send</button>
     </div>
   </div>
 
-  <div id="approvalToast">
+  <div id="approvalToast" class="fixed top-5 left-1/2 -translate-x-1/2 bg-ycode-darker border border-[#007acc] shadow-lg p-4 rounded-md z-[1000] hidden flex-col gap-2.5 text-[#ccc]">
     <div><strong>Agent is requesting permission to run:</strong></div>
-    <div id="approvalCommand"></div>
-    <div class="approval-buttons">
-      <button id="btnDeny">Deny</button>
-      <button id="btnApprove">Approve</button>
+    <div id="approvalCommand" class="font-mono bg-ycode-dark p-2 rounded break-all"></div>
+    <div class="flex gap-2.5 justify-end">
+      <button id="btnDeny" class="btn bg-ycode-red hover:bg-[#e85d6d]">Deny</button>
+      <button id="btnApprove" class="btn bg-ycode-green hover:bg-[#4caf50]">Approve</button>
     </div>
   </div>
 
   <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
   <script src="node_modules/@xterm/xterm/lib/xterm.js"></script>
   <script src="monaco-lsp-client.js"></script>
-  <script>
-    require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' }});
-    require(['vs/editor/editor.main'], function() {
-      const editor = monaco.editor.create(document.getElementById('container'), {
-        value: [
-          '// Welcome to YCode',
-          '// Start coding here...',
-          'function hello() {',
-          '  console.log("Hello, World!");',
-          '}'
-        ].join('\n'),
-        language: 'javascript',
-        theme: 'vs-dark',
-        automaticLayout: true,
-        fontSize: 14,
-        minimap: { enabled: true },
-        scrollBeyondLastLine: false,
-        wordWrap: 'on'
-      });
-
-      let currentFilePath = null;
-      let lspClient = null;
-      let aiHandler = null;
-
-      // Initialize LSP and AI features
-      function initializeLSP(uri, language) {
-        // Dispose previous LSP client if exists
-        if (lspClient) {
-          lspClient.dispose();
-          lspClient = null;
-        }
-
-        // Create new LSP client for supported languages
-        if (['javascript', 'typescript', 'python'].includes(language)) {
-          lspClient = new MonacoLSPClient(editor, window.electronAPI);
-          lspClient.initialize(uri, language);
-        }
-      }
-
-      // Initialize AI completion handler
-      if (typeof AICompletionHandler !== 'undefined') {
-        aiHandler = new AICompletionHandler(editor, window.electronAPI);
-      }
-
-      // Open file button
-      document.getElementById('openBtn').addEventListener('click', async () => {
-        const result = await window.electronAPI.selectFile();
-        if (result.success && !result.canceled) {
-          currentFilePath = result.filePath;
-          document.getElementById('filename').textContent = result.filePath;
-          editor.setValue(result.content);
-          
-          // Set language based on file extension
-          const ext = result.filePath.split('.').pop().toLowerCase();
-          const languageMap = {
-            'js': 'javascript',
-            'jsx': 'javascript',
-            'ts': 'typescript',
-            'tsx': 'typescript',
-            'html': 'html',
-            'htm': 'html',
-            'css': 'css',
-            'json': 'json',
-            'md': 'markdown'
-          };
-          const language = languageMap[ext] || 'plaintext';
-          monaco.editor.setModelLanguage(editor.getModel(), language);
-          
-          // Initialize LSP for this file
-          const fileUri = `file://${result.filePath}`;
-          initializeLSP(fileUri, language);
-        }
-      });
-
-      // Save file button
-      document.getElementById('saveBtn').addEventListener('click', async () => {
-        const content = editor.getValue();
-        let result;
-        
-        if (currentFilePath) {
-          // Save to existing file
-          result = await window.electronAPI.writeFile(currentFilePath, content);
-          if (result.success) {
-            alert('File saved successfully!');
-          } else {
-            alert('Error saving file: ' + result.error);
-          }
-        } else {
-          // Save as new file
-          result = await window.electronAPI.saveFile(content);
-          if (result.success && !result.canceled) {
-            currentFilePath = result.filePath;
-            document.getElementById('filename').textContent = result.filePath;
-            alert('File saved successfully!');
-          } else if (!result.canceled) {
-            alert('Error saving file: ' + result.error);
-          }
-        }
-      });
-
-      // Run code button
-      document.getElementById('runBtn').addEventListener('click', async () => {
-        const code = editor.getValue();
-        const language = editor.getModel().getLanguageId();
-        const outputPanel = document.getElementById('outputPanel');
-        const outputContent = document.getElementById('outputContent');
-        
-        outputPanel.classList.add('visible');
-        outputContent.textContent = 'Running code...';
-        outputContent.classList.remove('error');
-        
-        const result = await window.electronAPI.executeCode(code, language);
-        
-        if (result.success) {
-          outputContent.textContent = result.output || 'Code executed successfully (no output)';
-        } else {
-          outputContent.textContent = result.dockerError || result.error;
-          outputContent.classList.add('error');
-        }
-      });
-
-      // Close output panel
-      document.getElementById('closeOutput').addEventListener('click', () => {
-        document.getElementById('outputPanel').classList.remove('visible');
-      });
-
-      // Terminal setup
-      let terminal = null;
-      let terminalPid = null;
-
-      document.getElementById('terminalBtn').addEventListener('click', async () => {
-        const terminalPanel = document.getElementById('terminalPanel');
-        
-        if (!terminal) {
-          // Create terminal
-          terminal = new Terminal({
-            cursorBlink: true,
-            fontSize: 14,
-            fontFamily: 'Consolas, Courier New, monospace',
-            theme: {
-              background: '#1e1e1e',
-              foreground: '#cccccc',
-              cursor: '#cccccc'
-            }
-          });
-
-          terminal.open(document.getElementById('terminal'));
-
-          // Create terminal process
-          const result = await window.electronAPI.createTerminal();
-          if (result.success) {
-            terminalPid = result.pid;
-
-            // Handle terminal data from main process
-            window.electronAPI.onTerminalData((pid, data) => {
-              if (pid === terminalPid) {
-                terminal.write(data);
-              }
-            });
-
-            // Handle terminal exit
-            window.electronAPI.onTerminalExit((pid) => {
-              if (pid === terminalPid) {
-                terminal.write('\r\nTerminal closed\r\n');
-              }
-            });
-
-            // Send user input to terminal
-            terminal.onData((data) => {
-              if (terminalPid) {
-                window.electronAPI.terminalInput(terminalPid, data);
-              }
-            });
-
-            // Handle resize
-            const resizeObserver = new ResizeObserver(() => {
-              const container = document.getElementById('terminalContainer');
-              if (terminalPid && container) {
-                const cols = Math.floor(container.clientWidth / 8.5);
-                const rows = Math.floor(container.clientHeight / 17);
-                terminal.resize(cols, rows);
-                window.electronAPI.terminalResize(terminalPid, cols, rows);
-              }
-            });
-            resizeObserver.observe(document.getElementById('terminalContainer'));
-          } else {
-            alert('Failed to create terminal: ' + result.error);
-            terminal.dispose();
-            terminal = null;
-            return;
-          }
-        }
-
-        terminalPanel.classList.add('visible');
-      });
-
-      document.getElementById('closeTerminal').addEventListener('click', async () => {
-        const terminalPanel = document.getElementById('terminalPanel');
-        
-        if (terminalPid) {
-          await window.electronAPI.closeTerminal(terminalPid);
-          terminalPid = null;
-        }
-
-        if (terminal) {
-          terminal.dispose();
-          terminal = null;
-        }
-
-        terminalPanel.classList.remove('visible');
-      });
-
-      // Agent functionality
-      const agentBtn = document.getElementById('agentBtn');
-      const agentPanel = document.getElementById('agentPanel');
-      const closeAgent = document.getElementById('closeAgent');
-      const agentSubmit = document.getElementById('agentSubmit');
-      const agentInput = document.getElementById('agentInput');
-      const agentChat = document.getElementById('agentChat');
-      const agentStatus = document.getElementById('agentStatus');
-      
-      const approvalToast = document.getElementById('approvalToast');
-      const approvalCommand = document.getElementById('approvalCommand');
-      const btnApprove = document.getElementById('btnApprove');
-      const btnDeny = document.getElementById('btnDeny');
-
-      agentBtn.addEventListener('click', () => {
-        agentPanel.classList.toggle('visible');
-        if (agentPanel.classList.contains('visible')) {
-          agentInput.focus();
-        }
-      });
-
-      closeAgent.addEventListener('click', () => {
-        agentPanel.classList.remove('visible');
-      });
-
-      const appendMessage = (role, text) => {
-        const div = document.createElement('div');
-        div.className = role === 'user' ? 'user-msg' : 'agent-msg';
-        div.textContent = text;
-        agentChat.appendChild(div);
-        agentChat.scrollTop = agentChat.scrollHeight;
-      };
-
-      const sendAgentMessage = async () => {
-        const text = agentInput.value.trim();
-        if (!text) return;
-        
-        agentInput.value = '';
-        appendMessage('user', text);
-        
-        const result = await window.electronAPI.agentChat(text);
-        if (result.success) {
-          appendMessage('agent', result.response);
-        } else {
-          appendMessage('agent', 'Error: ' + result.error);
-        }
-      };
-
-      agentSubmit.addEventListener('click', sendAgentMessage);
-      agentInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendAgentMessage();
-      });
-
-      if (window.electronAPI.onAgentStatus) {
-        window.electronAPI.onAgentStatus((status) => {
-          agentStatus.textContent = status;
-        });
-
-        window.electronAPI.onAgentRequestApproval((command) => {
-          approvalCommand.textContent = command;
-          approvalToast.classList.add('visible');
-        });
-
-        btnApprove.addEventListener('click', () => {
-          approvalToast.classList.remove('visible');
-          window.electronAPI.sendAgentApprovalResponse(true);
-        });
-
-        btnDeny.addEventListener('click', () => {
-          approvalToast.classList.remove('visible');
-          window.electronAPI.sendAgentApprovalResponse(false);
-        });
-      }
-    });
-  </script>
+  <script src="renderer.js"></script>
 </body>
 </html>
