@@ -6,6 +6,10 @@ const docker = new Docker();
 const pty = require('node-pty');
 const LSPManager = require('./lsp-manager');
 const ExtensionManager = require('./extension-manager');
+const AgentManager = require('./agent-manager');
+
+// Initialize Agent
+const agentManager = new AgentManager();
 
 // Terminal management
 const terminals = new Map();
@@ -417,6 +421,36 @@ ipcMain.handle('extension-execute-command', async (event, commandId, ...args) =>
   try {
     const result = await ipcMain.emit(`command:${commandId}`, event, ...args);
     return { success: true, result };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Agent IPC Handlers
+ipcMain.handle('agent-chat', async (event, message) => {
+  const systemMessage = "You are an autonomous engineer inside YCode editor. You have access to a terminal and file system. Use the run_shell tool to verify your changes before finishing.";
+  
+  const callbacks = {
+    onAgentStatus: (status) => {
+      event.sender.send('agent-status', status);
+    },
+    onRequestApproval: (command) => {
+      return new Promise((resolve) => {
+        // Send request to renderer
+        event.sender.send('agent-request-approval', command);
+        
+        // Listen for response
+        const responseHandler = (e, isApproved) => {
+          resolve(isApproved);
+        };
+        ipcMain.once('agent-approval-response', responseHandler);
+      });
+    }
+  };
+
+  try {
+    const response = await agentManager.run(message, systemMessage, callbacks);
+    return { success: true, response };
   } catch (error) {
     return { success: false, error: error.message };
   }

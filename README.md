@@ -1,32 +1,45 @@
 # YCode
 
-A code editor built with Electron and Monaco Editor, featuring secure code execution via Docker containers.
+A modern, highly extensible code editor built with Electron and Monaco Editor. YCode features secure code execution via Docker containers and an integrated **Autonomous AI Agent Harness** that acts as your AI pair programmer.
 
 ## Features
 
-- **Monaco Editor**: Professional code editing with syntax highlighting
-- **File Operations**: Open, save, and edit files on your Windows system
-- **Secure Code Execution**: Run code in isolated Docker containers
-- **Multi-language Support**: JavaScript, TypeScript, Python, Go, Rust
+- **Autonomous AI Agent**: Built-in AI collaborator that can read files, list directories, and execute shell commands (with your approval) to help you build software.
+- **Monaco Editor**: Professional code editing with syntax highlighting and LSP (Language Server Protocol) support.
+- **Secure Code Execution**: Run code in isolated Docker containers with memory and network restrictions.
+- **Integrated Terminal**: Built-in xterm.js terminal powered by node-pty.
+- **Multi-language Support**: First-class support for JavaScript, TypeScript, Python, Go, and Rust.
+- **Extension System**: Extensible architecture allowing custom themes and commands.
 
 ## Prerequisites
 
-1. **Node.js** (LTS version) - Already installed if you followed the setup
-2. **Git** - Already installed if you followed the setup
-3. **Docker Desktop for Windows** - Required for code execution
-
-## Installing Docker Desktop
-
-1. Download Docker Desktop for Windows from: https://www.docker.com/products/docker-desktop/
-2. Run the installer and follow the setup wizard
-3. Start Docker Desktop from your Start menu
-4. Wait for Docker to start (you'll see the Docker icon in your system tray)
-5. Verify installation by running `docker --version` in PowerShell
+1. **Node.js** (LTS version)
+2. **Git**
+3. **Docker Desktop for Windows** - Required for secure code execution.
+4. **Ripgrep (rg)** - (Optional but recommended) Required for the Agent's `search_code` tool to work optimally.
 
 ## Installation
 
+1. Clone the repository
+2. Run the following command to install dependencies:
+
 ```bash
 npm install
+```
+
+## Configuring the AI Agent
+
+The Agent Harness requires an LLM API key. By default, it supports OpenAI, but it is fully compatible with any OpenAI-compatible endpoint (like Groq, Ollama, vLLM, etc.).
+
+Set the following environment variables before starting the application:
+
+```powershell
+# For Windows PowerShell
+$env:LLM_API_KEY="your-api-key-here"
+
+# (Optional) If using Groq or another provider:
+$env:LLM_BASE_URL="https://api.groq.com/openai/v1"
+$env:LLM_MODEL="llama3-8b-8192"
 ```
 
 ## Running the Application
@@ -37,21 +50,34 @@ npm start
 
 ## Usage
 
-1. **Open File**: Click "Open File" to select a file from your system
-2. **Edit Code**: Write or edit code in the Monaco Editor
-3. **Run Code**: Click "▶ Run Code" to execute your code in a Docker container
-4. **Save File**: Click "Save File" to save your changes
+### AI Agent
+1. Click the **🤖 Agent** button in the top toolbar to open the Agent sidebar.
+2. Type a request (e.g., "List the files in this directory" or "Create a new folder called utils").
+3. **Guardrails**: If the Agent needs to execute a shell command, a toast notification will appear asking for your Approval or Denial. Commands timeout automatically after 30 seconds to prevent infinite loops.
+
+### General Editor
+1. **Open File**: Click "Open File" to select a file from your system.
+2. **Edit Code**: Write or edit code in the Monaco Editor.
+3. **Run Code**: Click "▶ Run Code" to execute your code in a Docker container safely.
+4. **Terminal**: Click "Terminal" to open a local command prompt.
 
 ## Code Execution
 
 The editor uses Docker containers to safely execute code:
-- Each execution runs in an isolated container
-- Network access is disabled for security
-- Memory and CPU are limited
-- Containers are automatically removed after execution
+- Each execution runs in an isolated container.
+- Network access is disabled for security.
+- Memory and CPU are limited.
+- Containers are automatically removed after execution.
 
-Supported languages:
-- JavaScript/TypeScript (node:alpine)
-- Python (python:alpine)
-- Go (golang:alpine)
-- Rust (rust:alpine)
+Supported execution languages:
+- JavaScript/TypeScript (`node:alpine`)
+- Python (`python:alpine`)
+- Go (`golang:alpine`)
+- Rust (`rust:alpine`)
+
+## Contributing
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to YCode.
+
+## License
+ISC

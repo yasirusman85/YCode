@@ -43,6 +43,12 @@
     #terminalBtn:hover {
       background: #818cf8;
     }
+    #agentBtn {
+      background: #9333ea;
+    }
+    #agentBtn:hover {
+      background: #a855f7;
+    }
     #filename {
       color: #cccccc;
       padding: 8px;
@@ -146,6 +152,115 @@
     .xterm {
       height: 100%;
     }
+    #agentPanel {
+      position: fixed;
+      right: 0;
+      top: 48px;
+      bottom: 0;
+      width: 300px;
+      background: #1e1e1e;
+      border-left: 1px solid #3c3c3c;
+      display: none;
+      flex-direction: column;
+      z-index: 100;
+    }
+    #agentPanel.visible {
+      display: flex;
+    }
+    #agentHeader {
+      background: #252526;
+      padding: 8px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #3c3c3c;
+    }
+    #agentTitle {
+      color: #cccccc;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    #closeAgent {
+      background: transparent;
+      color: #ccc;
+      border: none;
+      cursor: pointer;
+    }
+    #agentChat {
+      flex-grow: 1;
+      padding: 10px;
+      overflow-y: auto;
+      color: #ccc;
+      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .agent-msg { background: #2d2d2d; padding: 8px; border-radius: 4px; white-space: pre-wrap; }
+    .user-msg { background: #0e639c; padding: 8px; border-radius: 4px; align-self: flex-end; white-space: pre-wrap; }
+    #agentStatus {
+      padding: 5px 10px;
+      font-size: 11px;
+      color: #888;
+      font-style: italic;
+      border-top: 1px solid #333;
+    }
+    #agentInputContainer {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #3c3c3c;
+    }
+    #agentInput {
+      flex-grow: 1;
+      background: #3c3c3c;
+      color: white;
+      border: 1px solid #555;
+      padding: 6px;
+      border-radius: 3px;
+    }
+    #agentSubmit {
+      background: #0e639c;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      margin-left: 5px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    /* Approval Toast */
+    #approvalToast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #252526;
+      border: 1px solid #007acc;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      padding: 15px;
+      border-radius: 6px;
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      color: #ccc;
+    }
+    #approvalToast.visible {
+      display: flex;
+    }
+    #approvalCommand {
+      font-family: monospace;
+      background: #1e1e1e;
+      padding: 8px;
+      border-radius: 4px;
+      word-break: break-all;
+    }
+    .approval-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    #btnApprove { background: #388a34; }
+    #btnDeny { background: #d73a49; }
   </style>
 </head>
 <body>
@@ -154,6 +269,7 @@
     <button id="saveBtn">Save File</button>
     <button id="runBtn">▶ Run Code</button>
     <button id="terminalBtn">Terminal</button>
+    <button id="agentBtn">🤖 Agent</button>
     <span id="filename">No file open</span>
   </div>
   <div id="container"></div>
@@ -175,6 +291,29 @@
       <div id="terminal"></div>
     </div>
   </div>
+
+  <div id="agentPanel">
+    <div id="agentHeader">
+      <span id="agentTitle">AI Agent</span>
+      <button id="closeAgent">✖</button>
+    </div>
+    <div id="agentChat"></div>
+    <div id="agentStatus">Idle</div>
+    <div id="agentInputContainer">
+      <input type="text" id="agentInput" placeholder="Ask agent..." />
+      <button id="agentSubmit">Send</button>
+    </div>
+  </div>
+
+  <div id="approvalToast">
+    <div><strong>Agent is requesting permission to run:</strong></div>
+    <div id="approvalCommand"></div>
+    <div class="approval-buttons">
+      <button id="btnDeny">Deny</button>
+      <button id="btnApprove">Approve</button>
+    </div>
+  </div>
+
   <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
   <script src="node_modules/@xterm/xterm/lib/xterm.js"></script>
   <script src="monaco-lsp-client.js"></script>
@@ -389,6 +528,80 @@
 
         terminalPanel.classList.remove('visible');
       });
+
+      // Agent functionality
+      const agentBtn = document.getElementById('agentBtn');
+      const agentPanel = document.getElementById('agentPanel');
+      const closeAgent = document.getElementById('closeAgent');
+      const agentSubmit = document.getElementById('agentSubmit');
+      const agentInput = document.getElementById('agentInput');
+      const agentChat = document.getElementById('agentChat');
+      const agentStatus = document.getElementById('agentStatus');
+      
+      const approvalToast = document.getElementById('approvalToast');
+      const approvalCommand = document.getElementById('approvalCommand');
+      const btnApprove = document.getElementById('btnApprove');
+      const btnDeny = document.getElementById('btnDeny');
+
+      agentBtn.addEventListener('click', () => {
+        agentPanel.classList.toggle('visible');
+        if (agentPanel.classList.contains('visible')) {
+          agentInput.focus();
+        }
+      });
+
+      closeAgent.addEventListener('click', () => {
+        agentPanel.classList.remove('visible');
+      });
+
+      const appendMessage = (role, text) => {
+        const div = document.createElement('div');
+        div.className = role === 'user' ? 'user-msg' : 'agent-msg';
+        div.textContent = text;
+        agentChat.appendChild(div);
+        agentChat.scrollTop = agentChat.scrollHeight;
+      };
+
+      const sendAgentMessage = async () => {
+        const text = agentInput.value.trim();
+        if (!text) return;
+        
+        agentInput.value = '';
+        appendMessage('user', text);
+        
+        const result = await window.electronAPI.agentChat(text);
+        if (result.success) {
+          appendMessage('agent', result.response);
+        } else {
+          appendMessage('agent', 'Error: ' + result.error);
+        }
+      };
+
+      agentSubmit.addEventListener('click', sendAgentMessage);
+      agentInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendAgentMessage();
+      });
+
+      if (window.electronAPI.onAgentStatus) {
+        window.electronAPI.onAgentStatus((status) => {
+          agentStatus.textContent = status;
+        });
+
+        window.electronAPI.onAgentRequestApproval((command) => {
+          approvalCommand.textContent = command;
+          approvalToast.classList.add('visible');
+        });
+
+        btnApprove.addEventListener('click', () => {
+          approvalToast.classList.remove('visible');
+          window.electronAPI.sendAgentApprovalResponse(true);
+        });
+
+        btnDeny.addEventListener('click', () => {
+          approvalToast.classList.remove('visible');
+          window.electronAPI.sendAgentApprovalResponse(false);
+        });
+      }
     });
   </script>
 </body>

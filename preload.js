@@ -30,5 +30,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   extensionsList: () => ipcRenderer.invoke('extensions-list'),
   extensionGetThemes: () => ipcRenderer.invoke('extension-get-themes'),
   extensionGetCommands: () => ipcRenderer.invoke('extension-get-commands'),
-  extensionExecuteCommand: (commandId, ...args) => ipcRenderer.invoke('extension-execute-command', commandId, ...args)
+  extensionExecuteCommand: (commandId, ...args) => ipcRenderer.invoke('extension-execute-command', commandId, ...args),
+  // Agent APIs
+  agentChat: (message) => ipcRenderer.invoke('agent-chat', message),
+  onAgentStatus: (callback) => ipcRenderer.on('agent-status', (event, status) => callback(status)),
+  onAgentRequestApproval: (callback) => ipcRenderer.on('agent-request-approval', (event, command) => callback(command)),
+  sendAgentApprovalResponse: (isApproved) => ipcRenderer.send('agent-approval-response', isApproved)
 });
