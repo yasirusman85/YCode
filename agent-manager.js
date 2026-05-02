@@ -26,6 +26,8 @@ class AgentManager {
     
     // Explicitly allow browser-like environments if necessary, but we are in main process
     this.openai = new OpenAI(config);
+  }
+
   validatePath(targetPath) {
     const resolvedPath = path.resolve(process.cwd(), targetPath);
     const cwd = process.cwd();
