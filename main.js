@@ -473,6 +473,15 @@ ipcMain.handle('agent-summarize', async () => {
   }
 });
 
+ipcMain.handle('agent-update-settings', async (event, settings) => {
+  try {
+    const response = agentManager.updateSettings(settings);
+    return { success: true, response };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
 app.whenReady().then(async () => {
   // Initialize extension manager
   await extensionManager.initialize();

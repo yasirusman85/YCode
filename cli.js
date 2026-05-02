@@ -5,7 +5,15 @@ const AgentManager = require('./agent-manager');
 
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
+  completer: (line) => {
+    const commands = ['/clear', '/summarize', '/model ', '/key ', '/help'];
+    if (line.startsWith('/')) {
+      const hits = commands.filter((c) => c.startsWith(line));
+      return [hits.length ? hits : commands, line];
+    }
+    return [[], line];
+  }
 });
 
 const colors = {
@@ -67,6 +75,35 @@ const chatLoop = () => {
       console.log(`${colors.cyan}Goodbye!${colors.reset}`);
       rl.close();
       process.exit(0);
+    }
+
+    if (text === '/' || text.toLowerCase() === '/help') {
+      console.log(`\n${colors.bright}${colors.cyan}Available Commands:${colors.reset}`);
+      console.log(`  ${colors.green}/clear${colors.reset}      - Clear agent memory context`);
+      console.log(`  ${colors.green}/summarize${colors.reset}  - Compress memory context`);
+      console.log(`  ${colors.green}/model <name>${colors.reset} - Switch LLM model`);
+      console.log(`  ${colors.green}/key <key>${colors.reset}    - Set API Key`);
+      console.log(`  ${colors.green}exit${colors.reset}          - Quit the CLI\n`);
+      console.log(`${colors.yellow}Tip: Type '/' and press Tab to autocomplete commands!${colors.reset}\n`);
+      return chatLoop();
+    }
+
+    if (text.toLowerCase().startsWith('/model ')) {
+      const model = text.substring(7).trim();
+      if (model) {
+        const response = agentManager.updateSettings({ model });
+        console.log(`\n${colors.bright}${colors.cyan}Agent > ${colors.reset}${response}\n`);
+      }
+      return chatLoop();
+    }
+
+    if (text.toLowerCase().startsWith('/key ')) {
+      const apiKey = text.substring(5).trim();
+      if (apiKey) {
+        agentManager.updateSettings({ apiKey });
+        console.log(`\n${colors.bright}${colors.cyan}Agent > ${colors.reset}API Key updated securely.\n`);
+      }
+      return chatLoop();
     }
 
     if (text.toLowerCase() === '/clear') {

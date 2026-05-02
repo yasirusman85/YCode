@@ -10,7 +10,19 @@ class AgentManager {
   constructor() {
     this.history = [];
     this.openai = null;
+    this.model = process.env.LLM_MODEL || 'gpt-4o';
     this.setupClient();
+  }
+
+  updateSettings({ model, apiKey, baseURL }) {
+    if (model) this.model = model;
+    if (apiKey || baseURL) {
+      this.setupClient(
+        baseURL || (this.openai ? this.openai.baseURL : process.env.LLM_BASE_URL),
+        apiKey || (this.openai ? this.openai.apiKey : process.env.LLM_API_KEY)
+      );
+    }
+    return `Agent configured to use model: ${this.model}`;
   }
 
   setupClient(baseURL = process.env.LLM_BASE_URL, apiKey = process.env.LLM_API_KEY) {
@@ -56,7 +68,7 @@ class AgentManager {
       const messages = [...historyToCompress, { role: 'user', content: summaryPrompt }];
       
       const response = await this.openai.chat.completions.create({
-        model: process.env.LLM_MODEL || 'gpt-4o',
+        model: this.model,
         messages: messages
       });
 
@@ -300,7 +312,7 @@ class AgentManager {
         const messages = [...historyToCompress, { role: 'user', content: summaryPrompt }];
         
         const response = await this.openai.chat.completions.create({
-          model: process.env.LLM_MODEL || 'gpt-4o',
+          model: this.model,
           messages: messages
         });
 
@@ -322,7 +334,7 @@ class AgentManager {
         loopCount++;
         
         const response = await this.openai.chat.completions.create({
-          model: process.env.LLM_MODEL || 'gpt-4o', // or llama3 via groq
+          model: this.model,
           messages: this.history,
           tools: this.getToolsSchema(),
           tool_choice: 'auto'

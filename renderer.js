@@ -177,10 +177,18 @@ require(['vs/editor/editor.main'], function() {
   const closeAgent = document.getElementById('closeAgent');
   const btnAgentClear = document.getElementById('btnAgentClear');
   const btnAgentSummarize = document.getElementById('btnAgentSummarize');
+  const btnAgentSettings = document.getElementById('btnAgentSettings');
+  const agentSettingsModal = document.getElementById('agentSettingsModal');
+  const btnCancelSettings = document.getElementById('btnCancelSettings');
+  const btnSaveSettings = document.getElementById('btnSaveSettings');
+  const agentApiKey = document.getElementById('agentApiKey');
+  const agentBaseUrl = document.getElementById('agentBaseUrl');
+  const agentModelSelect = document.getElementById('agentModelSelect');
   const agentSubmit = document.getElementById('agentSubmit');
   const agentInput = document.getElementById('agentInput');
   const agentChat = document.getElementById('agentChat');
   const agentStatus = document.getElementById('agentStatus');
+  const agentCommandMenu = document.getElementById('agentCommandMenu');
   
   const approvalToast = document.getElementById('approvalToast');
   const approvalCommand = document.getElementById('approvalCommand');
@@ -201,6 +209,41 @@ require(['vs/editor/editor.main'], function() {
   closeAgent.addEventListener('click', () => {
     agentPanel.classList.add('hidden');
     agentPanel.classList.remove('flex');
+  });
+
+  agentModelSelect.addEventListener('change', async (e) => {
+    const result = await window.electronAPI.agentUpdateSettings({ model: e.target.value });
+    if (result.success) {
+      appendMessage('agent', `[System] ${result.response}`);
+    }
+  });
+
+  btnAgentSettings.addEventListener('click', () => {
+    agentSettingsModal.classList.remove('hidden');
+    agentSettingsModal.classList.add('flex');
+  });
+
+  btnCancelSettings.addEventListener('click', () => {
+    agentSettingsModal.classList.add('hidden');
+    agentSettingsModal.classList.remove('flex');
+  });
+
+  btnSaveSettings.addEventListener('click', async () => {
+    const apiKey = agentApiKey.value.trim();
+    const baseURL = agentBaseUrl.value.trim();
+    
+    agentSettingsModal.classList.add('hidden');
+    agentSettingsModal.classList.remove('flex');
+
+    if (apiKey || baseURL) {
+      const result = await window.electronAPI.agentUpdateSettings({ apiKey, baseURL });
+      if (result.success) {
+        appendMessage('agent', '[System] API Key and Base URL updated.');
+        agentApiKey.value = ''; // clear for security
+      } else {
+        appendMessage('agent', '[System] Failed to update settings: ' + result.error);
+      }
+    }
   });
 
   btnAgentClear.addEventListener('click', async () => {
@@ -235,11 +278,113 @@ require(['vs/editor/editor.main'], function() {
     agentChat.scrollTop = agentChat.scrollHeight;
   };
 
+  const availableCommands = [
+    { cmd: '/clear', desc: 'Clear agent memory context' },
+    { cmd: '/summarize', desc: 'Compress memory context' },
+    { cmd: '/model ', desc: 'Switch LLM model (e.g. /model gpt-4o)' },
+    { cmd: '/key ', desc: 'Set API Key (e.g. /key sk-...)' }
+  ];
+  let selectedCommandIndex = -1;
+
+  const renderCommandMenu = (query) => {
+    agentCommandMenu.innerHTML = '';
+    const filtered = availableCommands.filter(c => c.cmd.startsWith(query));
+    if (filtered.length === 0 || query === '') {
+      agentCommandMenu.classList.add('hidden');
+      agentCommandMenu.classList.remove('flex');
+      selectedCommandIndex = -1;
+      return;
+    }
+    
+    filtered.forEach((item, idx) => {
+      const div = document.createElement('div');
+      div.className = `p-2 cursor-pointer text-[12px] flex justify-between border-b border-[#333] ${idx === selectedCommandIndex ? 'bg-[#0e639c]' : 'hover:bg-[#333]'}`;
+      div.innerHTML = `<span class="font-bold text-white">${item.cmd}</span><span class="text-[#888]">${item.desc}</span>`;
+      div.addEventListener('click', () => {
+        agentInput.value = item.cmd;
+        agentInput.focus();
+        agentCommandMenu.classList.add('hidden');
+        agentCommandMenu.classList.remove('flex');
+      });
+      agentCommandMenu.appendChild(div);
+    });
+    
+    agentCommandMenu.classList.remove('hidden');
+    agentCommandMenu.classList.add('flex');
+  };
+
+  agentInput.addEventListener('input', (e) => {
+    const val = e.target.value;
+    if (val.startsWith('/')) {
+      selectedCommandIndex = -1;
+      renderCommandMenu(val.toLowerCase());
+    } else {
+      agentCommandMenu.classList.add('hidden');
+      agentCommandMenu.classList.remove('flex');
+    }
+  });
+
+  agentInput.addEventListener('keydown', (e) => {
+    if (agentCommandMenu.classList.contains('hidden')) {
+      if (e.key === 'Enter') sendAgentMessage();
+      return;
+    }
+    
+    const items = agentCommandMenu.children;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      selectedCommandIndex = (selectedCommandIndex + 1) % items.length;
+      renderCommandMenu(agentInput.value.toLowerCase());
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      selectedCommandIndex = (selectedCommandIndex - 1 + items.length) % items.length;
+      renderCommandMenu(agentInput.value.toLowerCase());
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
+      if (selectedCommandIndex >= 0 && selectedCommandIndex < items.length) {
+        items[selectedCommandIndex].click();
+      } else if (items.length > 0) {
+        items[0].click();
+      }
+    }
+  });
+
   const sendAgentMessage = async () => {
     const text = agentInput.value.trim();
     if (!text) return;
     
     agentInput.value = '';
+    agentCommandMenu.classList.add('hidden');
+    agentCommandMenu.classList.remove('flex');
+
+    if (text.toLowerCase() === '/clear') {
+      btnAgentClear.click();
+      return;
+    }
+    if (text.toLowerCase() === '/summarize') {
+      btnAgentSummarize.click();
+      return;
+    }
+    if (text.toLowerCase().startsWith('/model ')) {
+      const model = text.substring(7).trim();
+      if (model) {
+        const result = await window.electronAPI.agentUpdateSettings({ model });
+        if (result.success) {
+          appendMessage('agent', `[System] ${result.response}`);
+          agentModelSelect.value = model;
+        }
+      }
+      return;
+    }
+    if (text.toLowerCase().startsWith('/key ')) {
+      const apiKey = text.substring(5).trim();
+      if (apiKey) {
+        const result = await window.electronAPI.agentUpdateSettings({ apiKey });
+        if (result.success) appendMessage('agent', '[System] API Key updated securely.');
+      }
+      return;
+    }
+    
     appendMessage('user', text);
     
     const result = await window.electronAPI.agentChat(text);
@@ -251,9 +396,6 @@ require(['vs/editor/editor.main'], function() {
   };
 
   agentSubmit.addEventListener('click', sendAgentMessage);
-  agentInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendAgentMessage();
-  });
 
   if (window.electronAPI.onAgentStatus) {
     window.electronAPI.onAgentStatus((status) => {
