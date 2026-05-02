@@ -28,6 +28,14 @@ class AgentManager {
     this.openai = new OpenAI(config);
   }
 
+  validatePath(targetPath) {
+    const resolvedPath = path.resolve(process.cwd(), targetPath);
+    if (!resolvedPath.startsWith(process.cwd())) {
+      throw new Error(`Path traversal denied: ${resolvedPath} is outside the workspace.`);
+    }
+    return resolvedPath;
+  }
+
   getToolsSchema() {
     return [
       {
@@ -86,6 +94,35 @@ class AgentManager {
             required: ["command"]
           }
         }
+      },
+      {
+        type: "function",
+        function: {
+          name: "write_file",
+          description: "Write content to a file.",
+          parameters: {
+            type: "object",
+            properties: {
+              filePath: { type: "string", description: "The path to the file to write." },
+              content: { type: "string", description: "The content to write to the file." }
+            },
+            required: ["filePath", "content"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "git_sync",
+          description: "Sync changes to git by staging all files and committing.",
+          parameters: {
+            type: "object",
+            properties: {
+              commitMessage: { type: "string", description: "The commit message describing the changes." }
+            },
+            required: ["commitMessage"]
+          }
+        }
       }
     ];
   }
@@ -96,14 +133,14 @@ class AgentManager {
     
     try {
       if (name === 'ls_files') {
-        const targetPath = args.dirPath === '.' ? process.cwd() : path.resolve(process.cwd(), args.dirPath);
+        const targetPath = args.dirPath === '.' ? process.cwd() : this.validatePath(args.dirPath);
         const files = await fs.readdir(targetPath, { withFileTypes: true });
         const list = files.map(f => `${f.isDirectory() ? '[DIR] ' : '[FILE]'} ${f.name}`).join('\n');
         return list || 'Directory is empty.';
       } 
       
       else if (name === 'read_file') {
-        const targetPath = path.resolve(process.cwd(), args.filePath);
+        const targetPath = this.validatePath(args.filePath);
         const content = await fs.readFile(targetPath, 'utf-8');
         return content;
       } 
@@ -124,7 +161,8 @@ class AgentManager {
         // Guardrail: Ask for human approval
         if (callbacks && callbacks.onRequestApproval) {
           callbacks.onAgentStatus('Waiting for user approval...');
-          const approved = await callbacks.onRequestApproval(args.command);
+          const prompt = `[RUN_SHELL]\nCommand: ${args.command}`;
+          const approved = await callbacks.onRequestApproval(prompt);
           if (!approved) {
             return "Execution denied by user.";
           }
@@ -134,6 +172,34 @@ class AgentManager {
         return await this.runShellWithPty(args.command);
       }
       
+      else if (name === 'write_file') {
+        const targetPath = this.validatePath(args.filePath);
+        if (callbacks && callbacks.onRequestApproval) {
+          callbacks.onAgentStatus('Waiting for user approval to write file...');
+          const prompt = `[WRITE_FILE]\nPath: ${targetPath}\n\nContent:\n${args.content}`;
+          const approved = await callbacks.onRequestApproval(prompt);
+          if (!approved) return "File write denied by user.";
+        }
+        await fs.writeFile(targetPath, args.content, 'utf-8');
+        return `Successfully wrote to ${targetPath}`;
+      }
+
+      else if (name === 'git_sync') {
+        if (callbacks && callbacks.onRequestApproval) {
+          callbacks.onAgentStatus('Waiting for user approval to commit...');
+          const prompt = `[GIT_SYNC]\nCommit Message: ${args.commitMessage}\nCommand: git add . && git commit -m "${args.commitMessage}"`;
+          const approved = await callbacks.onRequestApproval(prompt);
+          if (!approved) return "Git sync denied by user.";
+        }
+        callbacks.onAgentStatus(`Committing to Git: ${args.commitMessage}`);
+        try {
+          const { stdout } = await execPromise(`git add . && git commit -m "${args.commitMessage}"`);
+          return stdout || "Changes committed successfully.";
+        } catch (error) {
+          return `Git error: ${error.message}\n${error.stdout || ''}`;
+        }
+      }
+
       return `Error: Unknown tool ${name}`;
     } catch (error) {
       return `Tool execution error: ${error.message}`;

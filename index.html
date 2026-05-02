@@ -52,9 +52,9 @@
     </div>
   </div>
 
-  <div id="approvalToast" class="fixed top-5 left-1/2 -translate-x-1/2 bg-ycode-darker border border-[#007acc] shadow-lg p-4 rounded-md z-[1000] hidden flex-col gap-2.5 text-[#ccc]">
+  <div id="approvalToast" class="fixed top-5 left-1/2 -translate-x-1/2 w-[80vw] max-w-[800px] bg-ycode-darker border border-[#007acc] shadow-lg p-4 rounded-md z-[1000] hidden flex-col gap-2.5 text-[#ccc] max-h-[80vh]">
     <div><strong>Agent is requesting permission to run:</strong></div>
-    <div id="approvalCommand" class="font-mono bg-ycode-dark p-2 rounded break-all"></div>
+    <div id="approvalCommand" class="font-mono bg-ycode-dark p-2 rounded whitespace-pre-wrap overflow-y-auto max-h-[60vh] text-[12px]"></div>
     <div class="flex gap-2.5 justify-end">
       <button id="btnDeny" class="btn bg-ycode-red hover:bg-[#e85d6d]">Deny</button>
       <button id="btnApprove" class="btn bg-ycode-green hover:bg-[#4caf50]">Approve</button>
