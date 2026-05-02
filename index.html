@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>YCode Editor</title>
+  <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css" />
   <style>
     body {
       margin: 0;
@@ -35,6 +36,12 @@
     }
     #runBtn:hover {
       background: #4caf50;
+    }
+    #terminalBtn {
+      background: #6366f1;
+    }
+    #terminalBtn:hover {
+      background: #818cf8;
     }
     #filename {
       color: #cccccc;
@@ -97,6 +104,48 @@
     #outputContent.error {
       color: #f48771;
     }
+    #terminalPanel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 200px;
+      background: #1e1e1e;
+      border-top: 1px solid #3c3c3c;
+      display: none;
+      flex-direction: column;
+    }
+    #terminalPanel.visible {
+      display: flex;
+    }
+    #terminalHeader {
+      background: #252526;
+      padding: 8px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #3c3c3c;
+    }
+    #terminalTitle {
+      color: #cccccc;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    #terminalToolbar {
+      display: flex;
+      gap: 5px;
+    }
+    #terminalContainer {
+      flex-grow: 1;
+      padding: 5px;
+      overflow: hidden;
+    }
+    #terminal {
+      height: 100%;
+    }
+    .xterm {
+      height: 100%;
+    }
   </style>
 </head>
 <body>
@@ -104,6 +153,7 @@
     <button id="openBtn">Open File</button>
     <button id="saveBtn">Save File</button>
     <button id="runBtn">▶ Run Code</button>
+    <button id="terminalBtn">Terminal</button>
     <span id="filename">No file open</span>
   </div>
   <div id="container"></div>
@@ -114,7 +164,20 @@
     </div>
     <div id="outputContent"></div>
   </div>
+  <div id="terminalPanel">
+    <div id="terminalHeader">
+      <span id="terminalTitle">Terminal</span>
+      <div id="terminalToolbar">
+        <button id="closeTerminal" style="padding: 4px 12px; font-size: 11px;">Close</button>
+      </div>
+    </div>
+    <div id="terminalContainer">
+      <div id="terminal"></div>
+    </div>
+  </div>
   <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
+  <script src="node_modules/@xterm/xterm/lib/xterm.js"></script>
+  <script src="monaco-lsp-client.js"></script>
   <script>
     require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' }});
     require(['vs/editor/editor.main'], function() {
@@ -136,6 +199,28 @@
       });
 
       let currentFilePath = null;
+      let lspClient = null;
+      let aiHandler = null;
+
+      // Initialize LSP and AI features
+      function initializeLSP(uri, language) {
+        // Dispose previous LSP client if exists
+        if (lspClient) {
+          lspClient.dispose();
+          lspClient = null;
+        }
+
+        // Create new LSP client for supported languages
+        if (['javascript', 'typescript', 'python'].includes(language)) {
+          lspClient = new MonacoLSPClient(editor, window.electronAPI);
+          lspClient.initialize(uri, language);
+        }
+      }
+
+      // Initialize AI completion handler
+      if (typeof AICompletionHandler !== 'undefined') {
+        aiHandler = new AICompletionHandler(editor, window.electronAPI);
+      }
 
       // Open file button
       document.getElementById('openBtn').addEventListener('click', async () => {
@@ -160,6 +245,10 @@
           };
           const language = languageMap[ext] || 'plaintext';
           monaco.editor.setModelLanguage(editor.getModel(), language);
+          
+          // Initialize LSP for this file
+          const fileUri = `file://${result.filePath}`;
+          initializeLSP(fileUri, language);
         }
       });
 
@@ -213,6 +302,92 @@
       // Close output panel
       document.getElementById('closeOutput').addEventListener('click', () => {
         document.getElementById('outputPanel').classList.remove('visible');
+      });
+
+      // Terminal setup
+      let terminal = null;
+      let terminalPid = null;
+
+      document.getElementById('terminalBtn').addEventListener('click', async () => {
+        const terminalPanel = document.getElementById('terminalPanel');
+        
+        if (!terminal) {
+          // Create terminal
+          terminal = new Terminal({
+            cursorBlink: true,
+            fontSize: 14,
+            fontFamily: 'Consolas, Courier New, monospace',
+            theme: {
+              background: '#1e1e1e',
+              foreground: '#cccccc',
+              cursor: '#cccccc'
+            }
+          });
+
+          terminal.open(document.getElementById('terminal'));
+
+          // Create terminal process
+          const result = await window.electronAPI.createTerminal();
+          if (result.success) {
+            terminalPid = result.pid;
+
+            // Handle terminal data from main process
+            window.electronAPI.onTerminalData((pid, data) => {
+              if (pid === terminalPid) {
+                terminal.write(data);
+              }
+            });
+
+            // Handle terminal exit
+            window.electronAPI.onTerminalExit((pid) => {
+              if (pid === terminalPid) {
+                terminal.write('\r\nTerminal closed\r\n');
+              }
+            });
+
+            // Send user input to terminal
+            terminal.onData((data) => {
+              if (terminalPid) {
+                window.electronAPI.terminalInput(terminalPid, data);
+              }
+            });
+
+            // Handle resize
+            const resizeObserver = new ResizeObserver(() => {
+              const container = document.getElementById('terminalContainer');
+              if (terminalPid && container) {
+                const cols = Math.floor(container.clientWidth / 8.5);
+                const rows = Math.floor(container.clientHeight / 17);
+                terminal.resize(cols, rows);
+                window.electronAPI.terminalResize(terminalPid, cols, rows);
+              }
+            });
+            resizeObserver.observe(document.getElementById('terminalContainer'));
+          } else {
+            alert('Failed to create terminal: ' + result.error);
+            terminal.dispose();
+            terminal = null;
+            return;
+          }
+        }
+
+        terminalPanel.classList.add('visible');
+      });
+
+      document.getElementById('closeTerminal').addEventListener('click', async () => {
+        const terminalPanel = document.getElementById('terminalPanel');
+        
+        if (terminalPid) {
+          await window.electronAPI.closeTerminal(terminalPid);
+          terminalPid = null;
+        }
+
+        if (terminal) {
+          terminal.dispose();
+          terminal = null;
+        }
+
+        terminalPanel.classList.remove('visible');
       });
     });
   </script>

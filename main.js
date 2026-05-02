@@ -3,6 +3,17 @@ const path = require('path');
 const fs = require('fs').promises;
 const Docker = require('dockerode');
 const docker = new Docker();
+const pty = require('node-pty');
+const LSPManager = require('./lsp-manager');
+
+// Terminal management
+const terminals = new Map();
+
+// LSP management
+const lspManager = new LSPManager();
+
+// Store pending LSP requests
+const pendingLSPRequests = new Map();
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -180,6 +191,182 @@ ipcMain.handle('execute-code', async (event, code, language) => {
       dockerError: error.message.includes('connect') ? 'Docker is not running. Please start Docker Desktop.' : null
     };
   }
+});
+
+// IPC Handlers for Terminal
+ipcMain.handle('create-terminal', async (event) => {
+  try {
+    const shell = process.platform === 'win32' ? 'powershell.exe' : 'bash';
+    const ptyProcess = pty.spawn(shell, [], {
+      name: 'xterm-color',
+      cols: 80,
+      rows: 24,
+      cwd: process.cwd(),
+      env: process.env
+    });
+
+    const pid = ptyProcess.pid;
+    terminals.set(pid, ptyProcess);
+
+    // Send data to renderer
+    ptyProcess.onData((data) => {
+      event.sender.send('terminal-data', pid, data);
+    });
+
+    // Handle exit
+    ptyProcess.onExit(({ exitCode, signal }) => {
+      terminals.delete(pid);
+      event.sender.send('terminal-exit', pid);
+    });
+
+    return { success: true, pid };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('terminal-input', async (event, pid, data) => {
+  const ptyProcess = terminals.get(pid);
+  if (ptyProcess) {
+    ptyProcess.write(data);
+  }
+});
+
+ipcMain.handle('terminal-resize', async (event, pid, cols, rows) => {
+  const ptyProcess = terminals.get(pid);
+  if (ptyProcess) {
+    ptyProcess.resize(cols, rows);
+  }
+});
+
+ipcMain.handle('close-terminal', async (event, pid) => {
+  const ptyProcess = terminals.get(pid);
+  if (ptyProcess) {
+    ptyProcess.kill();
+    terminals.delete(pid);
+  }
+});
+
+// Clean up terminals on app quit
+app.on('before-quit', () => {
+  terminals.forEach((ptyProcess) => {
+    ptyProcess.kill();
+  });
+  terminals.clear();
+  lspManager.stopAll();
+});
+
+// IPC Handlers for LSP
+ipcMain.handle('lsp-start', async (event, language) => {
+  return await lspManager.startServer(language);
+});
+
+ipcMain.handle('lsp-stop', async (event, language) => {
+  lspManager.stopServer(language);
+  return { success: true };
+});
+
+ipcMain.handle('lsp-did-open', async (event, language, uri, languageId, version, text) => {
+  lspManager.didOpen(language, uri, languageId, version, text);
+  return { success: true };
+});
+
+ipcMain.handle('lsp-did-change', async (event, language, uri, version, contentChanges) => {
+  lspManager.didChange(language, uri, version, contentChanges);
+  return { success: true };
+});
+
+ipcMain.handle('lsp-completion', async (event, language, uri, line, character) => {
+  const result = lspManager.requestCompletion(language, uri, line, character);
+  if (result.success) {
+    return new Promise((resolve) => {
+      const requestId = result.requestId;
+      pendingLSPRequests.set(requestId, resolve);
+      
+      // Set up message handler for this request
+      const handler = (message) => {
+        if (message.id === requestId) {
+          resolve({ success: true, result: message.result });
+          pendingLSPRequests.delete(requestId);
+          lspManager.registerMessageHandler(language, handler);
+        }
+      };
+      lspManager.registerMessageHandler(language, handler);
+      
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        if (pendingLSPRequests.has(requestId)) {
+          pendingLSPRequests.delete(requestId);
+          resolve({ success: false, error: 'Completion request timeout' });
+        }
+      }, 5000);
+    });
+  }
+  return result;
+});
+
+ipcMain.handle('lsp-hover', async (event, language, uri, line, character) => {
+  const result = lspManager.requestHover(language, uri, line, character);
+  if (result.success) {
+    return new Promise((resolve) => {
+      const requestId = result.requestId;
+      pendingLSPRequests.set(requestId, resolve);
+      
+      const handler = (message) => {
+        if (message.id === requestId) {
+          resolve({ success: true, result: message.result });
+          pendingLSPRequests.delete(requestId);
+          lspManager.registerMessageHandler(language, handler);
+        }
+      };
+      lspManager.registerMessageHandler(language, handler);
+      
+      setTimeout(() => {
+        if (pendingLSPRequests.has(requestId)) {
+          pendingLSPRequests.delete(requestId);
+          resolve({ success: false, error: 'Hover request timeout' });
+        }
+      }, 5000);
+    });
+  }
+  return result;
+});
+
+ipcMain.handle('lsp-definition', async (event, language, uri, line, character) => {
+  const result = lspManager.requestDefinition(language, uri, line, character);
+  if (result.success) {
+    return new Promise((resolve) => {
+      const requestId = result.requestId;
+      pendingLSPRequests.set(requestId, resolve);
+      
+      const handler = (message) => {
+        if (message.id === requestId) {
+          resolve({ success: true, result: message.result });
+          pendingLSPRequests.delete(requestId);
+          lspManager.registerMessageHandler(language, handler);
+        }
+      };
+      lspManager.registerMessageHandler(language, handler);
+      
+      setTimeout(() => {
+        if (pendingLSPRequests.has(requestId)) {
+          pendingLSPRequests.delete(requestId);
+          resolve({ success: false, error: 'Definition request timeout' });
+        }
+      }, 5000);
+    });
+  }
+  return result;
+});
+
+// AI Completion handler
+ipcMain.handle('ai-complete', async (event, code, language, cursorPosition) => {
+  // Placeholder for AI completion - requires OpenAI API key
+  // In production, you'd call OpenAI API here
+  return { 
+    success: false, 
+    error: 'AI completion requires API key configuration. Add OPENAI_API_KEY to your environment variables.'
+  };
 });
 
 app.whenReady().then(() => {
