@@ -456,6 +456,23 @@ ipcMain.handle('agent-chat', async (event, message) => {
   }
 });
 
+ipcMain.handle('agent-clear', async () => {
+  try {
+    return { success: true, response: agentManager.clearHistory() };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('agent-summarize', async () => {
+  try {
+    const response = await agentManager.summarizeHistory();
+    return { success: true, response };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
 app.whenReady().then(async () => {
   // Initialize extension manager
   await extensionManager.initialize();

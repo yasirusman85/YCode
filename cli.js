@@ -69,6 +69,23 @@ const chatLoop = () => {
       process.exit(0);
     }
 
+    if (text.toLowerCase() === '/clear') {
+      const response = agentManager.clearHistory();
+      console.log(`\n${colors.bright}${colors.cyan}Agent > ${colors.reset}${response}\n`);
+      return chatLoop();
+    }
+
+    if (text.toLowerCase() === '/summarize') {
+      console.log(`\n${colors.magenta}[Agent Status]:${colors.reset} Compressing memory context...`);
+      try {
+        const response = await agentManager.summarizeHistory();
+        console.log(`\n${colors.bright}${colors.cyan}Agent > ${colors.reset}${response}\n`);
+      } catch (error) {
+        console.log(`\n${colors.red}Error: ${error.message}${colors.reset}\n`);
+      }
+      return chatLoop();
+    }
+
     try {
       const response = await agentManager.run(text, systemMessage, callbacks);
       console.log(`\n${colors.bright}${colors.cyan}Agent > ${colors.reset}${response}\n`);

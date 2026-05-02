@@ -26,14 +26,47 @@ class AgentManager {
     
     // Explicitly allow browser-like environments if necessary, but we are in main process
     this.openai = new OpenAI(config);
-  }
-
   validatePath(targetPath) {
     const resolvedPath = path.resolve(process.cwd(), targetPath);
-    if (!resolvedPath.startsWith(process.cwd())) {
+    const cwd = process.cwd();
+    if (resolvedPath !== cwd && !resolvedPath.startsWith(cwd + path.sep)) {
       throw new Error(`Path traversal denied: ${resolvedPath} is outside the workspace.`);
     }
     return resolvedPath;
+  }
+
+  clearHistory() {
+    if (this.history.length > 0 && this.history[0].role === 'system') {
+      this.history = [this.history[0]];
+    } else {
+      this.history = [];
+    }
+    return "Agent context cleared.";
+  }
+
+  async summarizeHistory() {
+    if (this.history.length <= 2) return "History is too short to summarize.";
+    const systemMessage = this.history.length > 0 && this.history[0].role === 'system' ? this.history[0] : null;
+    const historyToCompress = systemMessage ? this.history.slice(1) : this.history;
+
+    try {
+      const summaryPrompt = "Please summarize the following conversation history, focusing on the technical objectives, architectural decisions, and actions taken so far. Keep it concise but detailed enough to maintain situational awareness.";
+      const messages = [...historyToCompress, { role: 'user', content: summaryPrompt }];
+      
+      const response = await this.openai.chat.completions.create({
+        model: process.env.LLM_MODEL || 'gpt-4o',
+        messages: messages
+      });
+
+      const summaryText = response.choices[0].message.content;
+      this.history = [];
+      if (systemMessage) this.history.push(systemMessage);
+      this.history.push({ role: 'assistant', content: `[MEMORY SUMMARY]: ${summaryText}` });
+      
+      return "Agent context successfully summarized and compressed.";
+    } catch (error) {
+      throw new Error(`Failed to summarize history: ${error.message}`);
+    }
   }
 
   getToolsSchema() {
@@ -253,6 +286,30 @@ class AgentManager {
     this.history.push({ role: 'user', content: userMessage });
 
     try {
+      // Sliding window logic
+      if (this.history.length > 40) {
+        if (callbacks && callbacks.onAgentStatus) callbacks.onAgentStatus('Compressing memory context...');
+        
+        const systemMessage = this.history[0].role === 'system' ? this.history[0] : null;
+        const recentMessages = this.history.slice(-10);
+        const historyToCompress = this.history.slice(systemMessage ? 1 : 0, -10);
+
+        const summaryPrompt = "Please summarize the following older conversation history. Focus on the main goals, architectural state, and actions completed. This will serve as compressed memory.";
+        const messages = [...historyToCompress, { role: 'user', content: summaryPrompt }];
+        
+        const response = await this.openai.chat.completions.create({
+          model: process.env.LLM_MODEL || 'gpt-4o',
+          messages: messages
+        });
+
+        const summaryText = response.choices[0].message.content;
+        
+        this.history = [];
+        if (systemMessage) this.history.push(systemMessage);
+        this.history.push({ role: 'assistant', content: `[OLDER MEMORY SUMMARY]: ${summaryText}` });
+        this.history.push(...recentMessages);
+      }
+
       callbacks.onAgentStatus('Thinking...');
       
       // ReAct Loop

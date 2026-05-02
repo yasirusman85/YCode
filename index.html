@@ -42,7 +42,11 @@
   <div id="agentPanel" class="fixed right-0 top-[48px] bottom-0 w-[300px] bg-ycode-dark border-l border-ycode-border hidden flex-col z-50">
     <div id="agentHeader" class="panel-header">
       <span id="agentTitle" class="text-ycode-text text-xs font-bold">AI Agent</span>
-      <button id="closeAgent" class="bg-transparent text-[#ccc] border-none cursor-pointer">✖</button>
+      <div class="flex gap-2">
+        <button id="btnAgentSummarize" class="bg-transparent text-[#ccc] border-none cursor-pointer text-[12px] hover:text-white" title="Summarize Context">📝</button>
+        <button id="btnAgentClear" class="bg-transparent text-[#ccc] border-none cursor-pointer text-[12px] hover:text-white" title="Clear Context">🗑️</button>
+        <button id="closeAgent" class="bg-transparent text-[#ccc] border-none cursor-pointer hover:text-white">✖</button>
+      </div>
     </div>
     <div id="agentChat" class="flex-grow p-2.5 overflow-y-auto text-[#ccc] text-[13px] flex flex-col gap-2.5"></div>
     <div id="agentStatus" class="p-1 px-2.5 text-[11px] text-[#888] italic border-t border-[#333]">Idle</div>

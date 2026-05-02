@@ -175,6 +175,8 @@ require(['vs/editor/editor.main'], function() {
   const agentBtn = document.getElementById('agentBtn');
   const agentPanel = document.getElementById('agentPanel');
   const closeAgent = document.getElementById('closeAgent');
+  const btnAgentClear = document.getElementById('btnAgentClear');
+  const btnAgentSummarize = document.getElementById('btnAgentSummarize');
   const agentSubmit = document.getElementById('agentSubmit');
   const agentInput = document.getElementById('agentInput');
   const agentChat = document.getElementById('agentChat');
@@ -199,6 +201,26 @@ require(['vs/editor/editor.main'], function() {
   closeAgent.addEventListener('click', () => {
     agentPanel.classList.add('hidden');
     agentPanel.classList.remove('flex');
+  });
+
+  btnAgentClear.addEventListener('click', async () => {
+    const result = await window.electronAPI.agentClear();
+    if (result.success) {
+      agentChat.innerHTML = '';
+      appendMessage('agent', result.response);
+    }
+  });
+
+  btnAgentSummarize.addEventListener('click', async () => {
+    appendMessage('user', '[Command] Summarize Context');
+    agentStatus.textContent = 'Compressing memory...';
+    const result = await window.electronAPI.agentSummarize();
+    if (result.success) {
+      agentChat.innerHTML = '';
+      appendMessage('agent', result.response);
+    } else {
+      appendMessage('agent', 'Error summarizing: ' + result.error);
+    }
   });
 
   const appendMessage = (role, text) => {
