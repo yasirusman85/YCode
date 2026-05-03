@@ -269,9 +269,9 @@ require(['vs/editor/editor.main'], function() {
   const appendMessage = (role, text) => {
     const div = document.createElement('div');
     if (role === 'user') {
-      div.className = 'self-end bg-ycode-blue/20 border border-ycode-blue/30 text-white p-3 rounded-2xl rounded-tr-none max-w-[85%] shadow-xl transition-all duration-300 animate-in slide-in-from-right-4';
+      div.className = 'chat-bubble-user';
     } else {
-      div.className = 'self-start bg-white/5 border border-white/10 text-[#e0e0e0] p-3 rounded-2xl rounded-tl-none max-w-[85%] shadow-xl transition-all duration-300 animate-in slide-in-from-left-4';
+      div.className = 'chat-bubble-agent';
     }
     div.innerText = text;
     agentChat.appendChild(div);

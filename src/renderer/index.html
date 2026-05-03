@@ -6,106 +6,106 @@
   <link rel="stylesheet" href="../../node_modules/@xterm/xterm/css/xterm.css" />
   <link rel="stylesheet" href="../../styles/styles.css" />
 </head>
-<body class="m-0 p-0 overflow-hidden font-sans bg-ycode-dark text-ycode-text">
+<body>
   
-  <div id="toolbar" class="bg-ycode-darker p-2.5 flex gap-2.5 items-center border-b border-ycode-border">
+  <div id="toolbar" class="toolbar">
     <button id="openBtn" class="btn">Open File</button>
     <button id="saveBtn" class="btn">Save File</button>
-    <button id="runBtn" class="btn bg-ycode-green hover:bg-[#4caf50]">▶ Run Code</button>
-    <button id="terminalBtn" class="btn bg-[#6366f1] hover:bg-[#818cf8]">Terminal</button>
-    <button id="agentBtn" class="btn bg-ycode-purple hover:bg-[#a855f7]">🤖 Agent</button>
-    <span id="filename" class="text-ycode-text p-2 text-[13px] flex-grow">No file open</span>
+    <button id="runBtn" class="btn-run">▶ Run Code</button>
+    <button id="terminalBtn" class="btn-terminal">Terminal</button>
+    <button id="agentBtn" class="btn-agent">🤖 Agent</button>
+    <span id="filename" class="toolbar-filename">No file open</span>
   </div>
   
   <div id="container" class="w-screen" style="height: calc(100vh - 200px);"></div>
   
-  <div id="outputPanel" class="fixed bottom-0 left-0 right-0 h-[150px] bg-ycode-dark border-t border-ycode-border hidden flex-col">
+  <div id="outputPanel" class="output-panel">
     <div id="outputHeader" class="panel-header">
-      <span id="outputTitle" class="text-ycode-text text-xs font-bold">Output</span>
-      <button id="closeOutput" class="btn bg-ycode-red hover:bg-[#e85d6d] py-1 px-3 text-[11px]">Close</button>
+      <span id="outputTitle" class="panel-title">Output</span>
+      <button id="closeOutput" class="btn-close-panel">Close</button>
     </div>
-    <div id="outputContent" class="flex-grow p-2.5 overflow-auto text-ycode-text font-mono text-[13px] whitespace-pre-wrap"></div>
+    <div id="outputContent" class="output-content"></div>
   </div>
   
-  <div id="terminalPanel" class="fixed bottom-0 left-0 right-0 h-[200px] bg-ycode-dark border-t border-ycode-border hidden flex-col">
+  <div id="terminalPanel" class="terminal-panel">
     <div id="terminalHeader" class="panel-header">
-      <span id="terminalTitle" class="text-ycode-text text-xs font-bold">Terminal</span>
+      <span id="terminalTitle" class="panel-title">Terminal</span>
       <div id="terminalToolbar" class="flex gap-1">
-        <button id="closeTerminal" class="btn bg-ycode-red hover:bg-[#e85d6d] py-1 px-3 text-[11px]">Close</button>
+        <button id="closeTerminal" class="btn-close-panel">Close</button>
       </div>
     </div>
-    <div id="terminalContainer" class="flex-grow p-1 overflow-hidden">
+    <div id="terminalContainer" class="terminal-container">
       <div id="terminal" class="h-full"></div>
     </div>
   </div>
 
-  <div id="agentPanel" class="fixed right-0 top-[48px] bottom-0 w-[350px] bg-[#1e1e1e]/90 backdrop-blur-md border-l border-white/10 hidden flex-col z-50 shadow-2xl transition-all duration-300">
-    <div id="agentHeader" class="p-3 border-b border-white/10 flex justify-between items-center bg-white/5">
+  <div id="agentPanel" class="agent-panel">
+    <div id="agentHeader" class="agent-header">
       <div class="flex items-center gap-2">
-        <div class="w-2 h-2 rounded-full bg-ycode-green animate-pulse"></div>
-        <span id="agentTitle" class="text-white text-xs font-bold tracking-wider uppercase">YCode Sentinel</span>
+        <div class="agent-status-indicator"></div>
+        <span id="agentTitle" class="agent-title">YCode Sentinel</span>
       </div>
       <div class="flex gap-3 items-center">
-        <select id="agentModelSelect" class="bg-[#2d2d2d] text-[#ccc] border border-white/10 rounded px-1.5 py-0.5 text-[10px] focus:outline-none focus:border-ycode-blue transition-colors">
+        <select id="agentModelSelect" class="agent-select">
           <option value="gpt-4o">gpt-4o</option>
           <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
           <option value="claude-3-opus-20240229">claude-3</option>
           <option value="llama3-8b-8192">llama3</option>
         </select>
-        <button id="btnAgentSettings" class="text-[#888] hover:text-white transition-colors" title="Settings">⚙️</button>
-        <button id="btnAgentSummarize" class="text-[#888] hover:text-white transition-colors" title="Summarize">📝</button>
-        <button id="btnAgentClear" class="text-[#888] hover:text-white transition-colors" title="Clear">🗑️</button>
-        <button id="closeAgent" class="text-[#888] hover:text-white transition-colors">✖</button>
+        <button id="btnAgentSettings" class="agent-icon-btn" title="Settings">⚙️</button>
+        <button id="btnAgentSummarize" class="agent-icon-btn" title="Summarize">📝</button>
+        <button id="btnAgentClear" class="agent-icon-btn" title="Clear">🗑️</button>
+        <button id="closeAgent" class="agent-icon-btn">✖</button>
       </div>
     </div>
     
-    <div id="agentChat" class="flex-grow p-4 overflow-y-auto text-[#e0e0e0] text-[13px] flex flex-col gap-4 scrollbar-thin scrollbar-thumb-white/10">
+    <div id="agentChat" class="agent-chat-container">
       <!-- Welcome Message -->
-      <div class="bg-white/5 p-3 rounded-lg border border-white/5">
+      <div class="agent-welcome-bubble">
         <p class="text-ycode-blue font-bold mb-1">Hello, Chief.</p>
         <p class="text-[#888]">I'm your autonomous co-pilot. How can we improve the codebase today?</p>
       </div>
     </div>
 
-    <div id="agentStatus" class="px-4 py-1 text-[10px] text-[#555] uppercase tracking-widest font-bold">Status: Idle</div>
+    <div id="agentStatus" class="agent-status-bar">Status: Idle</div>
     
-    <div class="p-4 bg-white/5 border-t border-white/10 relative">
-      <div id="agentCommandMenu" class="absolute bottom-full left-0 w-full bg-[#1e1e1e] border-x border-t border-white/10 shadow-2xl rounded-t-xl hidden flex-col z-[100] max-h-[200px] overflow-y-auto backdrop-blur-xl"></div>
+    <div class="agent-input-container">
+      <div id="agentCommandMenu" class="agent-command-menu"></div>
       
       <div id="agentInputContainer" class="flex gap-2">
-        <input type="text" id="agentInput" class="flex-grow bg-white/5 text-white border border-white/10 p-2.5 rounded-lg focus:outline-none focus:border-ycode-blue/50 transition-all placeholder:text-[#444]" placeholder="Type / for commands..." autocomplete="off" />
-        <button id="agentSubmit" class="bg-ycode-blue hover:bg-ycode-blue/80 text-white px-4 rounded-lg transition-all active:scale-95 flex items-center justify-center">
+        <input type="text" id="agentInput" class="agent-input" placeholder="Type / for commands..." autocomplete="off" />
+        <button id="agentSubmit" class="agent-submit-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/></svg>
         </button>
       </div>
     </div>
   </div>
 
-  <div id="approvalToast" class="fixed top-5 left-1/2 -translate-x-1/2 w-[80vw] max-w-[800px] bg-ycode-darker border border-[#007acc] shadow-lg p-4 rounded-md z-[1000] hidden flex-col gap-2.5 text-[#ccc] max-h-[80vh]">
+  <div id="approvalToast" class="approval-toast">
     <div><strong>Agent is requesting permission to run:</strong></div>
     <div id="approvalCommand" class="font-mono bg-ycode-dark p-2 rounded whitespace-pre-wrap overflow-y-auto max-h-[60vh] text-[12px]"></div>
     <div class="flex gap-2.5 justify-end">
-      <button id="btnDeny" class="btn bg-ycode-red hover:bg-[#e85d6d]">Deny</button>
-      <button id="btnApprove" class="btn bg-ycode-green hover:bg-[#4caf50]">Approve</button>
+      <button id="btnDeny" class="btn-deny">Deny</button>
+      <button id="btnApprove" class="btn-approve">Approve</button>
     </div>
   </div>
 
-  <div id="agentSettingsModal" class="fixed inset-0 bg-black/50 z-[2000] hidden items-center justify-center">
-    <div class="bg-ycode-darker border border-ycode-border p-5 rounded-md shadow-lg w-[400px] text-ycode-text">
+  <div id="agentSettingsModal" class="modal-overlay">
+    <div class="modal-content">
       <h3 class="mt-0 mb-4 text-sm font-bold">Agent Settings</h3>
       <div class="flex flex-col gap-3">
         <div>
           <label class="block text-xs mb-1">API Key</label>
-          <input type="password" id="agentApiKey" class="w-full bg-[#3c3c3c] text-white border border-[#555] p-1.5 rounded-[3px]" placeholder="sk-..." />
+          <input type="password" id="agentApiKey" class="modal-input" placeholder="sk-..." />
         </div>
         <div>
           <label class="block text-xs mb-1">Base URL (Optional)</label>
-          <input type="text" id="agentBaseUrl" class="w-full bg-[#3c3c3c] text-white border border-[#555] p-1.5 rounded-[3px]" placeholder="https://api.openai.com/v1" />
+          <input type="text" id="agentBaseUrl" class="modal-input" placeholder="https://api.openai.com/v1" />
         </div>
       </div>
       <div class="flex gap-2.5 justify-end mt-5">
-        <button id="btnCancelSettings" class="btn bg-[#555] hover:bg-[#666]">Cancel</button>
-        <button id="btnSaveSettings" class="btn bg-ycode-green hover:bg-[#4caf50]">Save</button>
+        <button id="btnCancelSettings" class="btn-cancel">Cancel</button>
+        <button id="btnSaveSettings" class="btn-approve">Save</button>
       </div>
     </div>
   </div>
