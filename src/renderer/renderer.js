@@ -1,4 +1,4 @@
-require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' }});
+require.config({ paths: { 'vs': '../../node_modules/monaco-editor/min/vs' }});
 require(['vs/editor/editor.main'], function() {
   const editor = monaco.editor.create(document.getElementById('container'), {
     value: [
@@ -269,21 +269,25 @@ require(['vs/editor/editor.main'], function() {
   const appendMessage = (role, text) => {
     const div = document.createElement('div');
     if (role === 'user') {
-      div.className = 'bg-ycode-blue p-2 rounded self-end whitespace-pre-wrap';
+      div.className = 'self-end bg-ycode-blue/20 border border-ycode-blue/30 text-white p-3 rounded-2xl rounded-tr-none max-w-[85%] shadow-xl transition-all duration-300 animate-in slide-in-from-right-4';
     } else {
-      div.className = 'bg-[#2d2d2d] p-2 rounded whitespace-pre-wrap';
+      div.className = 'self-start bg-white/5 border border-white/10 text-[#e0e0e0] p-3 rounded-2xl rounded-tl-none max-w-[85%] shadow-xl transition-all duration-300 animate-in slide-in-from-left-4';
     }
-    div.textContent = text;
+    div.innerText = text;
     agentChat.appendChild(div);
     agentChat.scrollTop = agentChat.scrollHeight;
   };
 
-  const availableCommands = [
-    { cmd: '/clear', desc: 'Clear agent memory context' },
-    { cmd: '/summarize', desc: 'Compress memory context' },
-    { cmd: '/model ', desc: 'Switch LLM model (e.g. /model gpt-4o)' },
-    { cmd: '/key ', desc: 'Set API Key (e.g. /key sk-...)' }
-  ];
+  let availableCommands = [];
+  (async () => {
+    try {
+      const cmds = await window.electronAPI.agentGetCommands();
+      availableCommands = cmds.map(c => ({ cmd: `/${c.name}`, desc: c.description }));
+    } catch (e) {
+      console.error('Failed to load commands:', e);
+    }
+  })();
+
   let selectedCommandIndex = -1;
 
   const renderCommandMenu = (query) => {

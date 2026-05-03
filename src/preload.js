@@ -36,6 +36,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   agentClear: () => ipcRenderer.invoke('agent-clear'),
   agentSummarize: () => ipcRenderer.invoke('agent-summarize'),
   agentUpdateSettings: (settings) => ipcRenderer.invoke('agent-update-settings', settings),
+  agentGetCommands: () => ipcRenderer.invoke('agent-get-commands'),
   onAgentStatus: (callback) => ipcRenderer.on('agent-status', (event, status) => callback(status)),
   onAgentRequestApproval: (callback) => ipcRenderer.on('agent-request-approval', (event, command) => callback(command)),
   sendAgentApprovalResponse: (isApproved) => ipcRenderer.send('agent-approval-response', isApproved)

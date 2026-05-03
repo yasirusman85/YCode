@@ -7,6 +7,7 @@ const pty = require('node-pty');
 const LSPManager = require('./lsp-manager');
 const ExtensionManager = require('./extension-manager');
 const AgentManager = require('./agent-manager');
+const commandRegistry = require('./command-registry');
 
 // Initialize Agent
 const agentManager = new AgentManager();
@@ -28,13 +29,13 @@ function createWindow() {
     width: 1200,
     height: 800,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, '../preload.js'),
       contextIsolation: true,
       nodeIntegration: false
     }
   });
 
-  win.loadFile('index.html');
+  win.loadFile(path.join(__dirname, '../renderer/index.html'));
 }
 
 // IPC Handlers for file operations
@@ -480,6 +481,10 @@ ipcMain.handle('agent-update-settings', async (event, settings) => {
   } catch (error) {
     return { success: false, error: error.message };
   }
+});
+
+ipcMain.handle('agent-get-commands', () => {
+  return commandRegistry.getCommandList().map(c => ({ name: c.name, description: c.description }));
 });
 
 app.whenReady().then(async () => {

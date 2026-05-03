@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>YCode Editor</title>
-  <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="../../node_modules/@xterm/xterm/css/xterm.css" />
+  <link rel="stylesheet" href="../../styles/styles.css" />
 </head>
 <body class="m-0 p-0 overflow-hidden font-sans bg-ycode-dark text-ycode-text">
   
@@ -39,30 +39,44 @@
     </div>
   </div>
 
-  <div id="agentPanel" class="fixed right-0 top-[48px] bottom-0 w-[300px] bg-ycode-dark border-l border-ycode-border hidden flex-col z-50">
-    <div id="agentHeader" class="panel-header">
-      <span id="agentTitle" class="text-ycode-text text-xs font-bold">AI Agent</span>
-      <div class="flex gap-2 items-center">
-        <select id="agentModelSelect" class="bg-[#3c3c3c] text-white border border-[#555] rounded text-[11px] p-0.5 max-w-[80px]">
+  <div id="agentPanel" class="fixed right-0 top-[48px] bottom-0 w-[350px] bg-[#1e1e1e]/90 backdrop-blur-md border-l border-white/10 hidden flex-col z-50 shadow-2xl transition-all duration-300">
+    <div id="agentHeader" class="p-3 border-b border-white/10 flex justify-between items-center bg-white/5">
+      <div class="flex items-center gap-2">
+        <div class="w-2 h-2 rounded-full bg-ycode-green animate-pulse"></div>
+        <span id="agentTitle" class="text-white text-xs font-bold tracking-wider uppercase">YCode Sentinel</span>
+      </div>
+      <div class="flex gap-3 items-center">
+        <select id="agentModelSelect" class="bg-[#2d2d2d] text-[#ccc] border border-white/10 rounded px-1.5 py-0.5 text-[10px] focus:outline-none focus:border-ycode-blue transition-colors">
           <option value="gpt-4o">gpt-4o</option>
           <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
           <option value="claude-3-opus-20240229">claude-3</option>
           <option value="llama3-8b-8192">llama3</option>
         </select>
-        <button id="btnAgentSettings" class="bg-transparent text-[#ccc] border-none cursor-pointer text-[12px] hover:text-white" title="Settings">⚙️</button>
-        <button id="btnAgentSummarize" class="bg-transparent text-[#ccc] border-none cursor-pointer text-[12px] hover:text-white" title="Summarize Context">📝</button>
-        <button id="btnAgentClear" class="bg-transparent text-[#ccc] border-none cursor-pointer text-[12px] hover:text-white" title="Clear Context">🗑️</button>
-        <button id="closeAgent" class="bg-transparent text-[#ccc] border-none cursor-pointer hover:text-white">✖</button>
+        <button id="btnAgentSettings" class="text-[#888] hover:text-white transition-colors" title="Settings">⚙️</button>
+        <button id="btnAgentSummarize" class="text-[#888] hover:text-white transition-colors" title="Summarize">📝</button>
+        <button id="btnAgentClear" class="text-[#888] hover:text-white transition-colors" title="Clear">🗑️</button>
+        <button id="closeAgent" class="text-[#888] hover:text-white transition-colors">✖</button>
       </div>
     </div>
-    <div id="agentChat" class="flex-grow p-2.5 overflow-y-auto text-[#ccc] text-[13px] flex flex-col gap-2.5"></div>
-    <div id="agentStatus" class="p-1 px-2.5 text-[11px] text-[#888] italic border-t border-[#333]">Idle</div>
-    <div class="relative">
-      <div id="agentCommandMenu" class="absolute bottom-full left-0 w-full bg-[#252526] border border-ycode-border shadow-lg rounded-t-md hidden flex-col z-[100] max-h-[150px] overflow-y-auto">
+    
+    <div id="agentChat" class="flex-grow p-4 overflow-y-auto text-[#e0e0e0] text-[13px] flex flex-col gap-4 scrollbar-thin scrollbar-thumb-white/10">
+      <!-- Welcome Message -->
+      <div class="bg-white/5 p-3 rounded-lg border border-white/5">
+        <p class="text-ycode-blue font-bold mb-1">Hello, Chief.</p>
+        <p class="text-[#888]">I'm your autonomous co-pilot. How can we improve the codebase today?</p>
       </div>
-      <div id="agentInputContainer" class="flex p-2.5 border-t border-ycode-border">
-        <input type="text" id="agentInput" class="flex-grow bg-[#3c3c3c] text-white border border-[#555] p-1.5 rounded-[3px]" placeholder="Ask agent... (Type / for commands)" autocomplete="off" />
-        <button id="agentSubmit" class="btn ml-1 py-1.5 px-3">Send</button>
+    </div>
+
+    <div id="agentStatus" class="px-4 py-1 text-[10px] text-[#555] uppercase tracking-widest font-bold">Status: Idle</div>
+    
+    <div class="p-4 bg-white/5 border-t border-white/10 relative">
+      <div id="agentCommandMenu" class="absolute bottom-full left-0 w-full bg-[#1e1e1e] border-x border-t border-white/10 shadow-2xl rounded-t-xl hidden flex-col z-[100] max-h-[200px] overflow-y-auto backdrop-blur-xl"></div>
+      
+      <div id="agentInputContainer" class="flex gap-2">
+        <input type="text" id="agentInput" class="flex-grow bg-white/5 text-white border border-white/10 p-2.5 rounded-lg focus:outline-none focus:border-ycode-blue/50 transition-all placeholder:text-[#444]" placeholder="Type / for commands..." autocomplete="off" />
+        <button id="agentSubmit" class="bg-ycode-blue hover:bg-ycode-blue/80 text-white px-4 rounded-lg transition-all active:scale-95 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/></svg>
+        </button>
       </div>
     </div>
   </div>
@@ -96,8 +110,8 @@
     </div>
   </div>
 
-  <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
-  <script src="node_modules/@xterm/xterm/lib/xterm.js"></script>
+  <script src="../../node_modules/monaco-editor/min/vs/loader.js"></script>
+  <script src="../../node_modules/@xterm/xterm/lib/xterm.js"></script>
   <script src="monaco-lsp-client.js"></script>
   <script src="renderer.js"></script>
 </body>

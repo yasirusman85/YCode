@@ -2,17 +2,17 @@
   "name": "ycode",
   "version": "1.0.0",
   "description": "YCode - A modern code editor with intelligent features",
-  "main": "main.js",
+  "main": "src/main/main.js",
   "bin": {
-    "ycode": "./cli.js"
+    "ycode": "src/cli.js"
   },
   "scripts": {
     "start": "electron .",
-    "agent": "node cli.js",
+    "agent": "node src/cli.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "electron-builder",
-    "build:css": "npx @tailwindcss/cli -i ./src/input.css -o ./styles.css",
-    "watch:css": "npx @tailwindcss/cli -i ./src/input.css -o ./styles.css --watch",
+    "build:css": "npx @tailwindcss/cli -i ./styles/input.css -o ./styles/styles.css",
+    "watch:css": "npx @tailwindcss/cli -i ./styles/input.css -o ./styles/styles.css --watch",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
     "build:linux": "electron-builder --linux",
