@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ycode-dark: #0f1115;
+  --color-ycode-darker: #0a0b0d;
+  --color-ycode-card: rgba(20, 22, 28, 0.7);
+  --color-ycode-border: rgba(255, 255, 255, 0.08);
+  --color-ycode-blue: #3b82f6;
+  --color-ycode-purple: #8b5cf6;
+  --color-ycode-green: #10b981;
+}
+
+body {
+  background-color: var(--color-ycode-dark);
+  color: #e2e8f0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Glassmorphism utilities */
+.glass {
+  background: var(--color-ycode-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-ycode-border);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-ycode-blue), var(--color-ycode-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Neon glow */
+.glow-purple {
+  box-shadow: 0 0 40px -10px rgba(139, 92, 246, 0.4);
+}
+.glow-blue {
+  box-shadow: 0 0 40px -10px rgba(59, 130, 246, 0.4);
+}
